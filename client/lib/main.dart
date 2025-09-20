@@ -1,3 +1,7 @@
+import 'package:client/component/qr_scanner_widget.dart';
+
+import 'screens/Doctor_screen.dart';
+import 'screens/Medical_screen.dart';
 import 'screens/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'theme/app_theme.dart';
@@ -125,14 +129,15 @@ class _hackathonAppState extends State<hackathonApp> {
       debugShowCheckedModeBanner: false,
       theme: isDarkMode ? AppTheme.darkTheme : AppTheme.lightTheme,
       home: Scaffold(
-        body: Layout(
-          isDarkMode: isDarkMode,
-          onThemeToggle: () {
-            setState(() {
-              isDarkMode = !isDarkMode;
-            });
-          },
-        ),
+        body: Medical_screen()
+        // Layout(
+        //   isDarkMode: isDarkMode,
+        //   onThemeToggle: () {
+        //     setState(() {
+        //       isDarkMode = !isDarkMode;
+        //     });
+        //   },
+        // ),
 
       ),
     );
