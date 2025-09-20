@@ -38,15 +38,9 @@ class _LayoutState extends State<Layout> {
   Widget build(BuildContext context) {
     final pages = [
       HomeScreen(),
-<<<<<<< HEAD
-      cart_screen(),
-      const order_screen(),
-      const profile_screen(),
-=======
       community(),
       nutrition(),
       profile_screen(),
->>>>>>> c212cdb29c129226f411376acf4104ef8eaac5cc
     ];
 
     return Scaffold(
