@@ -46,11 +46,15 @@ class RegisterView(APIView):
         name = request.data.get('name')
         password = request.data.get('password')
         confirm_password = request.data.get('confirm_password')
+        is_doctor = request.data.get('is_doctor', False)
+        is_medical_store = request.data.get('is_medical_store', False)
         authenticate_request(request)
 
         if not email or not name or not password or not confirm_password:
             return Response({"message": "Email, name, password, and confirm_password are required"}, status=status.HTTP_400_BAD_REQUEST)
 
+        if is_doctor and is_medical_store:
+            return Response({"message": "User cannot be both doctor and medical store"}, status=status.HTTP_400_BAD_REQUEST)
         if password != confirm_password:
             return Response({"message": "Passwords do not match"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -72,7 +76,7 @@ class RegisterView(APIView):
             user = existing_user
         else:
             # Create new user
-            user = User.objects.create_user(email=email, name=name, password=password)
+            user = User.objects.create_user(email=email, name=name, password=password, is_doctor=is_doctor, is_medical_store=is_medical_store)
             user.otp = otp
             user.otp_expiration = timezone.now() + timezone.timedelta(minutes=5)
             user.is_active = False
@@ -82,7 +86,7 @@ class RegisterView(APIView):
         send_mail(
             'Your OTP Code',
             f'Your OTP code is {otp}',
-            'crodlintech@gmail.com',
+            'infiniteloops69@gmail.com',
             [email],
             fail_silently=False,
             html_message=html_message,
@@ -107,7 +111,7 @@ class RegisterView(APIView):
             send_mail(
                 'Welcome to Crodlin Connect',
                 'Thank you for verifying your email.',
-                'crodlintech@gmail.com',  # Replace with your email
+                'infiniteloops69@gmail.com',  # Replace with your email
                 [email],
                 fail_silently=False,
                 html_message=html_message,
@@ -136,7 +140,7 @@ class ResendotpView(APIView):
             send_mail(
                 'Your OTP Code',
                 f'Your OTP code is {otp}',
-                'crodlintech@gmail.com',  # Replace with your email
+                'infiniteloops69@gmail.com',  # Replace with your email
                 [email],
                 fail_silently=False,
                 html_message=html_message,
@@ -232,7 +236,7 @@ class PasswordResetRequestView(APIView):
         send_mail(
             'Password Reset OTP',
             f'Your OTP for password reset is {otp}.',
-            'crodlintech@gmail.com',
+            'infiniteloops69@gmail.com',
             [email],
             fail_silently=False,
             html_message=html_message,
@@ -279,7 +283,7 @@ class PasswordResetView(APIView):
         send_mail(
             'Password Reset Successful',
             'Your password has been reset successfully.',
-            'crodlintech@gmail.com',
+            'infiniteloops69@gmail.com',
             [email],
             fail_silently=False,
             html_message=html_message,
@@ -311,7 +315,7 @@ class UserView(APIView):
         send_mail(
                 'Name Reset Successful',
                 'Your name has been reset successfully.',
-                'crodlintech@gmail.com',
+                'infiniteloops69@gmail.com',
                 [user.email],
                 fail_silently=False,
                 html_message=html_message,
@@ -328,7 +332,7 @@ class UserView(APIView):
         send_mail(
                 'Account Deleted Successful',
                 'Your account has been permanently deleted successfully.',
-                'crodlintech@gmail.com',
+                'infiniteloops69@gmail.com',
                 [user.email],
                 fail_silently=False,
                 html_message=html_message,

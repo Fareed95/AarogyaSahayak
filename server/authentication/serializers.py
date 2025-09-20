@@ -1,16 +1,13 @@
-
-
 from rest_framework import serializers
-# from asuka_server.models import items
 from .models import User
 from django.utils import timezone
 
-class userSerializers(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     confirm_password = serializers.CharField(write_only=True)
-    otp = serializers.CharField(required=True,write_only=True)
+    otp = serializers.CharField(write_only=True, required=False)
     class Meta:
         model = User
-        fields =[
+        fields = [
             'id',
             'name',
             'email',
@@ -18,16 +15,29 @@ class userSerializers(serializers.ModelSerializer):
             'confirm_password',
             'otp',
             'is_staff',
-            'phone_number'
-        ]
-        extra_kwargs={
-            'password':{'write_only':True}
+            'aadhar_number',
+            'is_doctor',
+            'is_medical_store',
+            ]
+        extra_kwargs = {
+            'password': {'write_only': True},
         }
-class passwordResetReqSerializers(serializers.Serializer):
-    email= serializers.EmailField()
 
-class passwordResetSerializers(serializers.Serializer):
-    email= serializers.EmailField()
+
+        
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+
+class PasswordResetSerializer(serializers.Serializer):
+    email = serializers.EmailField()
     otp = serializers.CharField(max_length=6)
-    new_password=serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True)
+    confirm_password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        if data['new_password'] != data['confirm_password']:
+            raise serializers.ValidationError("Passwords do not match.")
+        return data
 

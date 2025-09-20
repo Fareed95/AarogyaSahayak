@@ -19,7 +19,7 @@ from django.urls import path,include
 from .views import health_check
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('',include('authentication.urls')),
+    path('api/authentication/',include('authentication.urls')),
     path('api/',include('userDeets.urls')),
     path('',health_check),
 

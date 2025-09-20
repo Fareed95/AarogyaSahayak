@@ -28,7 +28,7 @@ class SuperuserLoginView(LoginView):
             send_mail(
             'Your OTP Code',
             f'Your OTP code is {otp}',
-            'crodlintech@gmail.com',
+            'infiniteloops69@gmail.com',
             [user.email],
             fail_silently=False,
             html_message=html_message,
