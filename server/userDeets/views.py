@@ -14,7 +14,7 @@ import requests
 from google.oauth2 import service_account
 from google.auth.transport.requests import Request
 class UserDeetsViewSet(APIView):
-        def get(self,request):
+    def get(self,request):
             token = request.headers.get('Authorization')
 
             if not token:
@@ -33,7 +33,7 @@ class UserDeetsViewSet(APIView):
 
             return Response(serializer.data)
 
-        def patch(self,request):
+    def patch(self,request):
             token = request.headers.get('Authorization')
 
             if not token:
@@ -49,21 +49,22 @@ class UserDeetsViewSet(APIView):
             user = UserDeets.objects.filter(email=payload['email']).first() 
             fcm_token=request.data.get('fcm_token')
             address=request.data.get('address')
-            # gst_number=request.data.get('gst_number')
+            gst_number=request.data.get('gst_number')
             phoneNo=request.data.get('phoneNo')
             username=request.data.get('username')
             if fcm_token is not None:
                 user.fcm_token=fcm_token
             if address is not None:
                 user.address=address
-            # if gst_number is not None:
-            #     user.gst_number=gst_number
+            if gst_number is not None:
+                user.gst_number=gst_number
             if phoneNo is not None:
                 user.phoneNo=phoneNo
             if username is not None:
                 user.username=username
             user.save()
             return Response({"message": "User info updated successfully !"}, status=status.HTTP_201_CREATED)
+
 
 
 SERVICE_ACCOUNT_FILE = 'userDeets/hackathon-996b5-firebase-adminsdk-fbsvc-8fd9d7f423.json'
