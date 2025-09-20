@@ -32,7 +32,7 @@ class _LoginPageState extends State<login_screen> {
     if (_formKey.currentState!.validate()) {
       try {
         // API endpoint
-        const String apiUrl = 'https://flutter-demo-c7cg.onrender.com/login/';
+        const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/authentication/login';
 
         // Prepare the request body
         final Map<String, dynamic> requestBody = {
@@ -54,6 +54,7 @@ class _LoginPageState extends State<login_screen> {
         if (response.statusCode == 200 || response.statusCode == 201) {
           // Success
           final responseData = jsonDecode(response.body);
+          
             await SecureStorageService().storeJwtToken(responseData['jwt']);
             print("token stored successfully");
             print(responseData['jwt']);

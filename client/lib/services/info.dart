@@ -45,6 +45,32 @@ class Info {
     return _prefs!.getString('userId');
   }
 
+
+
+
+  Future<void> setDoctor(bool value) async {
+    await _ensureInitialized();
+    await _prefs!.setBool('doctor', value);
+  }
+
+  Future<bool> isDoctor() async {
+    await _ensureInitialized();
+    return _prefs!.getBool('doctor') ?? false;
+  }
+
+
+  Future<void> setMedical(bool value) async {
+    await _ensureInitialized();
+    await _prefs!.setBool('Medical', value);
+  }
+
+  Future<bool> isMedical() async {
+    await _ensureInitialized();
+    return _prefs!.getBool('Medical') ?? false;
+  }
+
+
+
   Future<void> setUserEmail(String email) async {
     await _ensureInitialized();
     await _prefs!.setString('userEmail', email);

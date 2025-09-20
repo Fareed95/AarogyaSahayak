@@ -59,7 +59,7 @@ class _OtpScreenState extends State<OtpScreen> {
 
     try {
       // API endpoint for OTP verification
-      const String apiUrl = 'https://flutter-demo-c7cg.onrender.com/register/';
+      const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/authentication/register';
 
       // Prepare the request body
       final Map<String, dynamic> requestBody = {
@@ -113,7 +113,7 @@ class _OtpScreenState extends State<OtpScreen> {
 
   Future<void> _resendOtp() async {
     try{
-      const String apiUrl='https://flutter-demo-c7cg.onrender.com/resendotp/';
+      const String apiUrl='https://codenebula-internal-round-25.onrender.com/api/authentication/resendotp/';
       final Map<String,dynamic>reqbody={
         'email':widget.email
       };
@@ -149,7 +149,7 @@ class _OtpScreenState extends State<OtpScreen> {
 
     try {
       // API endpoint for resending OTP
-      const String apiUrl = 'https://flutter-demo-c7cg.onrender.com/resendotp/';
+      const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/authentication/resendotp';
 
       // Prepare the request body
       final Map<String, dynamic> requestBody = {

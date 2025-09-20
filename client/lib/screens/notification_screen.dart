@@ -49,7 +49,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
         // Make POST request
         final response = await http.post(
-          Uri.parse('https://flutter-demo-c7cg.onrender.com/api/notification/'),
+          Uri.parse('https://codenebula-internal-round-25.onrender.com/api/notification/'),
           headers: <String, String>{
             'Content-Type': 'application/json; charset=UTF-8',
             'Authorization': jwtToken,

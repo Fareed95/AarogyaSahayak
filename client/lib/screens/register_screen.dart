@@ -36,13 +36,14 @@ class _SignupPageState extends State<SignupPage> {
 
       try {
         // API endpoint
-        const String apiUrl = 'https://flutter-demo-c7cg.onrender.com/register/';
+        const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/authentication/register';
 
         // Prepare the request body
         final Map<String, dynamic> requestBody = {
-          'username': _nameController.text.trim(),
+          'name': _nameController.text.trim(),
           'email': _emailController.text.trim(),
           'password': _passwordController.text,
+          'confirm_password': _confirmPasswordController.text,
         };
 
         // Make POST request

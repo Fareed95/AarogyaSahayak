@@ -215,10 +215,10 @@ class LogoutView(APIView):
 
 # ----------------- Password Reset Request -----------------
 class PasswordResetRequestView(APIView):
-    throttle_classes = [PasswordResetRequestThrottle]
 
     @csrf_exempt
     def post(self, request):
+        print("check")
         serializer = PasswordResetRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.validated_data['email']
@@ -250,8 +250,6 @@ class PasswordResetRequestView(APIView):
 
 # ----------------- Password Reset -----------------
 class PasswordResetView(APIView):
-
-    throttle_classes = [PasswordResetThrottle]
     @csrf_exempt
     def post(self, request):
         serializer = PasswordResetSerializer(data=request.data)
@@ -275,7 +273,6 @@ class PasswordResetView(APIView):
         user.session_id = None
         user.otp = None
         user.otp_expiration = None
-        user.last_password_reset = timezone.now()
         user.save()
 
         # Audit log

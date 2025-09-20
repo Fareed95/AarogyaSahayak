@@ -18,15 +18,7 @@ class _Medical_screenState extends State<Medical_screen> {
       appBar: AppBar(title: const Text('Scan QR')),
       body: Column(
         children: [
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const Doctor_screen()),
-              );
-            },
-            child: const Text("Go to Doctor Screen"),
-          ),
+
           Expanded(
             flex: 4,
             child: QRScannerSimple(
