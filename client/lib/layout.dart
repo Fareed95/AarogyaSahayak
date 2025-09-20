@@ -3,28 +3,24 @@ import 'package:client/screens/nutrition.dart';
 import 'package:flutter/material.dart';
 import '../widgets/custom_drawer.dart';
 import '../screens/home_screen.dart';
-
 import '../screens/profile_screen.dart';
 import '../widgets/theme_switch.dart';
+
 class Layout extends StatefulWidget {
   final bool isDarkMode;
   final VoidCallback onThemeToggle;
-
   const Layout({
     super.key,
     required this.isDarkMode,
     required this.onThemeToggle,
   });
-
   @override
   State<Layout> createState() => _LayoutState();
 }
 
 class _LayoutState extends State<Layout> {
   int selectedIndex = 0;
-
-
-
+  
   void _onDrawerItemTap(int index) {
     Navigator.pop(context); // close drawer
     setState(() {
@@ -36,11 +32,11 @@ class _LayoutState extends State<Layout> {
   Widget build(BuildContext context) {
     final pages = [
       HomeScreen(),
-      community(),
-      nutrition(),
-      profile_screen(),
+      community(), // Keep original lowercase if that's what exists in community.dart
+      Nutrition(), // This one we fixed
+      profile_screen(), // Keep original lowercase if that's what exists in profile_screen.dart
     ];
-
+    
     return Scaffold(
       appBar: AppBar(
         title: Text("Hackathon"),
