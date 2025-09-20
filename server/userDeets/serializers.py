@@ -19,6 +19,12 @@ class accountSerializers(serializers.ModelSerializer):
             'fcm_token'
         ]
 
+    def get_email(self, obj):
+        return obj.user.email
+
+    def get_is_staff(self, obj):
+        return obj.user.is_staff
+
 
 
 class DoseSerializer(serializers.ModelSerializer):

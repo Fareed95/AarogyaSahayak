@@ -11,14 +11,14 @@ from .models import Report, ReportInstance
 from utils.usercheck import authenticate_request
 
 # Agents import
-from agents.extracting_basic_details import parse_pdf_auto, update_with_user_response
-from agents.extracting_json_details import extract_medical_from_pdf, generate_report_summary
+from .agents.extracting_basic_details import parse_pdf_auto, update_with_user_response
+from .agents.extracting_json_details import extract_medical_from_pdf, generate_report_summary
 
 
 class ReportView(APIView):
 
     def post(self, request):
-        user = authenticate_request(request)
+        user = authenticate_request(request, need_user=True)
         if not user:
             return Response({"error": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -86,6 +86,7 @@ class ReportView(APIView):
 
             # parse PDF for basic details
             details, memory = parse_pdf_auto(abs_path, diseases, [])
+            print(details)
 
             # create report + instance
             report = Report.objects.create(user=user, title=file.name)

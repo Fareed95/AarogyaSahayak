@@ -17,7 +17,7 @@ from utils.usercheck import authenticate_request
 class UserDeetsViewSet(APIView):
     def get(self,request):
             user = authenticate_request(request, need_user=True)
-            userdetails = UserDeets.objects.filter(userid=user.id).first()    
+            userdetails = UserDeets.objects.filter(user=user).first()    
             try:
                 print("inside try")
                 serializer = accountSerializers(userdetails)
@@ -29,7 +29,9 @@ class UserDeetsViewSet(APIView):
 
     def patch(self,request):
             user = authenticate_request(request, need_user=True)
-            userdetails = UserDeets.objects.filter(userid=user.id).first()   
+            print(user)
+            userdetails = UserDeets.objects.filter(user=user).first() 
+            print(userdetails)
             fcm_token=request.data.get('fcm_token')
             address=request.data.get('address')
             gst_number=request.data.get('gst_number')
