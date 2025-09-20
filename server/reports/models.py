@@ -31,7 +31,9 @@ class ReportInstance(models.Model):   # 👈 plural hataya, singular rakha
     json = models.JSONField(null=True, blank=True)  # ✅ fixed
     instance_name = models.CharField(max_length=200)
     instance_summary = models.TextField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    date_of_the_report = models.DateTimeField(auto_now_add=True)
+    address_of_the_doctor = models.TextField(null=True, blank=True)
+    name_of_the_doctor = models.CharField(max_length=200, null=True, blank=True)
 
     def __str__(self):
         return f"{self.instance_name} - {self.report.title}"
