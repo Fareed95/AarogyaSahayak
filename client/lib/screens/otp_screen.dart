@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../screens/otp_screen.dart';
-import '../component/custom_snackbar.dart.dart';
+import '../component/custom_snackbar.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../services/secure_storage_service.dart';
