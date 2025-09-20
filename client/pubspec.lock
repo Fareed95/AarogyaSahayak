@@ -860,6 +860,7 @@ packages:
     version: "7.0.0"
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 <<<<<<< HEAD
 =======
   sqflite:
@@ -903,6 +904,8 @@ packages:
     source: hosted
     version: "2.4.0"
 >>>>>>> f5951477d6de4c2a90880f5404c0d12bb62bf1c3
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======

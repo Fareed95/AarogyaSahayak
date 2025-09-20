@@ -36,6 +36,7 @@ class _LayoutState extends State<Layout> {
     final pages = [
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 <<<<<<< HEAD
       HomeScreen(),
       cart_screen(),
@@ -50,11 +51,16 @@ class _LayoutState extends State<Layout> {
 =======
 =======
 >>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
       home_screen(),
       cart_screen(),
       const order_screen(),
       const profile_screen(),
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
