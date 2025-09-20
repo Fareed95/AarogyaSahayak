@@ -34,7 +34,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     super.dispose();
   }
   Future<void> _resend() async{
-    const String apiUrl = 'https://flutter-demo-c7cg.onrender.com/resendotp/';
+    const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/authentication/resendotp';
 
     final Map<String, dynamic> requestBody = {
       'email': _emailController.text.trim(),
@@ -92,7 +92,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      const String apiUrl = 'https://flutter-demo-c7cg.onrender.com/password-reset-request/';
+      const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/authentication/password-reset-request/';
 
       final Map<String, dynamic> requestBody = {
         'email': _emailController.text.trim(),
@@ -155,7 +155,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      const String apiUrl = 'https://flutter-demo-c7cg.onrender.com/password-reset/';
+      const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/authentication/password-reset/';
 
       final Map<String, dynamic> requestBody = {
         'email': _storedEmail,
