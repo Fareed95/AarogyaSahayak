@@ -1,8 +1,5 @@
-
-
 from rest_framework import serializers
-# from asuka_server.models import items
-from .models import UserDeets
+from .models import UserDeets,Medicine,Dose
 
 class accountSerializers(serializers.ModelSerializer):
     email = serializers.EmailField(source='user.email',read_only=True)
@@ -16,13 +13,18 @@ class accountSerializers(serializers.ModelSerializer):
             'is_staff',
             'username',
             'phoneNo',
-            # 'gst_number',
             'address',
             'fcm_token'
         ]
 
 
-# class projSerializers(serializers.ModelSerializer):
-#     class Meta:
-#         model = projectsmodels
-#         fields = '__all__'
+class DoseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Dose
+        fields = ['dose_name', 'description', 'dose_time']
+
+class MedicineSerializer(serializers.ModelSerializer):
+    doses = DoseSerializer(many=True, read_only=True)
+    class Meta:
+        model = Medicine
+        fields = ['id', 'name', 'description', 'manufacturer', 'expiry_date', 'doses']

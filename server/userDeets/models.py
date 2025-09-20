@@ -16,3 +16,23 @@ class UserDeets(models.Model):
     fcm_token=models.CharField(null=True,blank=True)
     def __str__(self):
         return f"{self.username} ({self.user.email})"
+
+    
+class Medicine(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='medicines')
+    name = models.CharField(max_length=100)
+    description = models.TextField(null=True, blank=True)
+    manufacturer = models.CharField(max_length=100, null=True, blank=True)
+    expiry_date = models.DateField(null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+class Dose(models.Model):
+    dose_name = models.CharField(max_length=100)
+    description = models.TextField(null=True, blank=True)
+    dose_time = models.TimeField(auto_now=False, auto_now_add=False)
+    medicine = models.ForeignKey(Medicine, on_delete=models.CASCADE, related_name='doses')
+
+    def __str__(self):
+        return self.dose_name
