@@ -14,7 +14,6 @@ from langchain.schema import HumanMessage
 # ------------------------------
 # Load API key
 # ------------------------------
-
 load_dotenv()
 google_api_key = os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=google_api_key)
@@ -131,9 +130,9 @@ def generate_report_summary(page_results: List[PageResults]) -> str:
         {json.dumps(chunk, indent=2)}
 
         Generate a **human-readable summary** in good language,
-        explaining the overall report, main findings, abnormal values, 
+        explaining the overall report in very deep, main findings, abnormal values, 
         and any recommendations if applicable.
-        Keep it concise and professional.
+        Keep the tone professional.
         """
         response = summary_model([HumanMessage(content=prompt)])
         summaries.append(response.content.strip())
@@ -146,7 +145,7 @@ def generate_report_summary(page_results: List[PageResults]) -> str:
 # Main
 # ------------------------------
 if __name__ == "__main__":
-    pdf_file = "test1.PDF"
+    pdf_file = "test.pdf"
     final_results = extract_medical_from_pdf(pdf_file)
     print("Extracted Page Results:")
     print([r.dict() for r in final_results])

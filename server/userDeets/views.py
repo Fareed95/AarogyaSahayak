@@ -13,56 +13,39 @@ from rest_framework import status
 import requests
 from google.oauth2 import service_account
 from google.auth.transport.requests import Request
+from utils.usercheck import authenticate_request
 class UserDeetsViewSet(APIView):
     def get(self,request):
-            token = request.headers.get('Authorization')
-
-            if not token:
-                raise AuthenticationFailed('Unauthenticated!')
-
+            user = authenticate_request(request, need_user=True)
+            userdetails = UserDeets.objects.filter(userid=user.id).first()    
             try:
-                
-                payload = jwt.decode(token, 'secret', algorithms="HS256")
-            except jwt.ExpiredSignatureError:
-                raise AuthenticationFailed('Token expired!')
-            except jwt.InvalidTokenError:
-                raise AuthenticationFailed('Invalid token!')
-
-            user = UserDeets.objects.filter(email=payload['email']).first()    
-            serializer = accountSerializers(user)
+                print("inside try")
+                serializer = accountSerializers(userdetails)
+                print(serializer.data)
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
             return Response(serializer.data)
 
     def patch(self,request):
-            token = request.headers.get('Authorization')
-
-            if not token:
-                raise AuthenticationFailed('Unauthenticated!')
-
-            try:
-                payload = jwt.decode(token, 'secret', algorithms="HS256")
-            except jwt.ExpiredSignatureError:
-                raise AuthenticationFailed('Token expired!')
-            except jwt.InvalidTokenError:
-                raise AuthenticationFailed('Invalid token!')
-
-            user = UserDeets.objects.filter(email=payload['email']).first() 
+            user = authenticate_request(request, need_user=True)
+            userdetails = UserDeets.objects.filter(userid=user.id).first()   
             fcm_token=request.data.get('fcm_token')
             address=request.data.get('address')
             gst_number=request.data.get('gst_number')
             phoneNo=request.data.get('phoneNo')
             username=request.data.get('username')
             if fcm_token is not None:
-                user.fcm_token=fcm_token
+                userdetails.fcm_token=fcm_token
             if address is not None:
-                user.address=address
+                userdetails.address=address
             if gst_number is not None:
-                user.gst_number=gst_number
+                userdetails.gst_number=gst_number
             if phoneNo is not None:
-                user.phoneNo=phoneNo
+                userdetails.phoneNo=phoneNo
             if username is not None:
-                user.username=username
-            user.save()
+                userdetails.username=username
+            userdetails.save()
             return Response({"message": "User info updated successfully !"}, status=status.HTTP_201_CREATED)
 
 
