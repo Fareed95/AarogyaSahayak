@@ -34,7 +34,7 @@ class _LayoutState extends State<Layout> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      home_screen(),
+      HomeScreen(),
       cart_screen(),
       const order_screen(),
       const profile_screen(),
