@@ -1,4 +1,5 @@
 import 'screens/login_screen.dart';
+import 'screens/voice_agent.dart';
 import 'package:flutter/material.dart';
 import 'theme/app_theme.dart';
 import 'layout.dart';
@@ -15,7 +16,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  print(" Background message received: ${message.messageId}");
+  print("Background message received: ${message.messageId}");
 }
 
 void main() async {
@@ -27,80 +28,71 @@ void main() async {
 
   // Background message registration
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-  runApp(const hackathonApp());
+  runApp(const HackathonApp());
 }
 
-class hackathonApp extends StatefulWidget {
-  const hackathonApp({super.key});
+class HackathonApp extends StatefulWidget {
+  const HackathonApp({super.key});
 
   @override
-  State<hackathonApp> createState() => _hackathonAppState();
+  State<HackathonApp> createState() => _HackathonAppState();
 }
 
-class _hackathonAppState extends State<hackathonApp> {
+class _HackathonAppState extends State<HackathonApp> {
   bool isDarkMode = false;
 
   @override
   void initState() {
     super.initState();
     _initFCM();
-    setFMC();
+    _setFCM();
   }
-  Future<void> setFMC() async {
+
+  Future<void> _setFCM() async {
     FirebaseMessaging messaging = FirebaseMessaging.instance;
     String? token = await messaging.getToken();
     var value = await Info().isLoggedIn();
-    print('value ${value}');
+    print('User logged in? $value');
     String? jwtToken = await SecureStorageService().getJwtToken();
+
     if (jwtToken != null) {
       try {
         // API endpoint
         const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/user/';
+        final Map<String, dynamic> requestBody = {'fcm_token': token};
 
-        // Prepare the request body
-        final Map<String, dynamic> requestBody = {
-          'fcm_token':token
-        };
 
-        // Make POST request
         final response = await http.patch(
           Uri.parse(apiUrl),
           headers: <String, String>{
             'Content-Type': 'application/json; charset=UTF-8',
-            'Authorization':jwtToken
+            'Authorization': jwtToken
           },
           body: jsonEncode(requestBody),
         );
 
-        // Handle response
         if (response.statusCode == 200 || response.statusCode == 201) {
-          // Success
           final responseData = jsonDecode(response.body);
           print(responseData);
 
+
+          print("FCM token updated successfully: $responseData");
         } else {
-          // Error - show appropriate message
           final errorData = jsonDecode(response.body);
-          print(errorData);
-
-          // Show error message based on API response
-
+          print("Error updating FCM token: $errorData");
         }
       } catch (error) {
-        // Network or other errors
-        print(error);
-
-      }}
-    else{
+        print("Network or other error: $error");
+      }
+    } else {
       print('No JWT token found');
     }
   }
+
   Future<void> _initFCM() async {
     try {
       FirebaseMessaging messaging = FirebaseMessaging.instance;
 
-      // Request permission (iOS only, safe to call on Android too)
       NotificationSettings settings = await messaging.requestPermission(
         alert: true,
         badge: true,
@@ -108,11 +100,8 @@ class _hackathonAppState extends State<hackathonApp> {
       );
 
       print('🔔 User granted permission: ${settings.authorizationStatus}');
-
-      // Get the token
       String? token = await messaging.getToken();
-
-
+      print('FCM Token: $token');
     } catch (e) {
       print("❌ Error getting FCM token: $e");
     }
@@ -125,16 +114,36 @@ class _hackathonAppState extends State<hackathonApp> {
       debugShowCheckedModeBanner: false,
       theme: isDarkMode ? AppTheme.darkTheme : AppTheme.lightTheme,
       home: Scaffold(
-        body: Layout(
-          isDarkMode: isDarkMode,
-          onThemeToggle: () {
-            setState(() {
-              isDarkMode = !isDarkMode;
-            });
-          },
+        body: Column(
+          children: [
+            Expanded(
+              child: Layout(
+                isDarkMode: isDarkMode,
+                onThemeToggle: () {
+                  setState(() {
+                    isDarkMode = !isDarkMode;
+                  });
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CartScreen(),
+                    ),
+                  );
+                },
+                child: const Text("Open Voice Assistant"),
+              ),
+            ),
+          ],
         ),
-
       ),
     );
   }
 }
+
