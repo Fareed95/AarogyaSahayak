@@ -1,18 +1,14 @@
-from django.shortcuts import render
-import logging
-logger = logging.getLogger(__name__)
-# Create your views here.
-# Create your views here.
 from django.http import HttpResponse
 from rest_framework.views import APIView
-from .serializers import accountSerializers
-from .models import UserDeets
+from .serializers import accountSerializers,MedicineSerializer
+from .models import UserDeets,Medicine,Dose
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework.exceptions import AuthenticationFailed
 import jwt
+from django.utils.dateparse import parse_date
 from rest_framework import status
 import requests
 from google.oauth2 import service_account
@@ -143,6 +139,113 @@ class NotificationViewset(APIView):
             "message": "Notification sent",
             "fcm_responses": results
         }, status=status.HTTP_200_OK)
-def a(request):
-    return HttpResponse("supp")
     
+
+
+
+
+class getMedicineViewset(APIView):
+    def post(self, request):
+        patient_token = request.data.get('patient_token')
+        if not patient_token:
+            raise AuthenticationFailed('Token not given!')
+
+        
+        user_deets = UserDeets.objects.filter(email=patient_token).first()
+        if not user_deets:
+            raise AuthenticationFailed('Invalid token: user not found!')
+
+        
+        medicines = Medicine.objects.filter(user=user_deets.user).prefetch_related('doses')
+
+        
+        serializer = MedicineSerializer(medicines, many=True)
+        return Response({
+            "patient": user_deets.username,
+            "medicines": serializer.data
+        })
+    
+
+
+class PostMedicineView(APIView):
+    def post(self, request):
+        patient_token = request.data.get('patient_token')
+        if not patient_token:
+            raise AuthenticationFailed('Token not given!')
+
+        user_deets = UserDeets.objects.filter(email=patient_token).first()
+        if not user_deets:
+            raise AuthenticationFailed('Invalid token: user not found!')
+
+        # pull nested doses from data
+        doses_data = request.data.pop('doses', [])
+
+        # create medicine
+        medicine = Medicine.objects.create(
+            user=user_deets.user,
+            name=request.data.get('name'),
+            description=request.data.get('description'),
+            manufacturer=request.data.get('manufacturer'),
+            expiry_date=parse_date(request.data.get('expiry_date'))
+        )
+
+        # create each dose
+        for d in doses_data:
+            Dose.objects.create(
+                medicine=medicine,
+                dose_name=d.get('dose_name'),
+                description=d.get('description'),
+                dose_time=d.get('dose_time')
+            )
+
+        # serialize for response
+        serializer = MedicineSerializer(medicine)
+        return Response(serializer.data, status=201)
+
+
+
+
+    def patch(self, request, pk):
+        
+        patient_token = request.data.get('patient_token')
+        if not patient_token:
+            raise AuthenticationFailed('Token not given!')
+
+        user_deets = UserDeets.objects.filter(email=patient_token).first()
+        if not user_deets:
+            raise AuthenticationFailed('Invalid token: user not found!')
+
+
+        try:
+            medicine = Medicine.objects.get(id=pk, user=user_deets.user)
+        except Medicine.DoesNotExist:
+            raise AuthenticationFailed('Medicine not found or not allowed!')
+
+
+        doses_data = request.data.pop('doses', None)
+
+
+        if 'name' in request.data:
+            medicine.name = request.data['name']
+        if 'description' in request.data:
+            medicine.description = request.data['description']
+        if 'manufacturer' in request.data:
+            medicine.manufacturer = request.data['manufacturer']
+        if 'expiry_date' in request.data:
+            medicine.expiry_date = parse_date(request.data['expiry_date'])
+        medicine.save()
+
+        # If client sent doses, replace old doses with new ones
+        if doses_data is not None:
+            medicine.doses.all().delete()
+            for d in doses_data:
+                Dose.objects.create(
+                    medicine=medicine,
+                    dose_name=d.get('dose_name'),
+                    description=d.get('description'),
+                    dose_time=d.get('dose_time')
+                )
+
+
+        serializer = MedicineSerializer(medicine)
+        return Response(serializer.data)

@@ -24,7 +24,7 @@ class DoseSerializer(serializers.ModelSerializer):
         fields = ['dose_name', 'description', 'dose_time']
 
 class MedicineSerializer(serializers.ModelSerializer):
-    doses = DoseSerializer(many=True, read_only=True)
+    doses = DoseSerializer(many=True)
     class Meta:
         model = Medicine
         fields = ['id', 'name', 'description', 'manufacturer', 'expiry_date', 'doses']

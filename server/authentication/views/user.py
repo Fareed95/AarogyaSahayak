@@ -19,7 +19,7 @@ from utils.usercheck import authenticate_request
 import uuid
 from utils.audit_client_ip import get_client_ip
 from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
-
+from userDeets.models import UserDeets
 load_dotenv()
 # Disable SSL verification
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -116,7 +116,11 @@ class RegisterView(APIView):
                 fail_silently=False,
                 html_message=html_message,
             )
-
+            UserDeets.objects.update_or_create(
+                user=user,
+                username=user.name,
+                email=email
+                        )
             return Response({'message': 'User verified successfully'})
         else:
             return Response({'error': 'Invalid OTP or OTP expired'}, status=status.HTTP_400_BAD_REQUEST)
