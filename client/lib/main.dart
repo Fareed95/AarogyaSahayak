@@ -126,20 +126,7 @@ class _HackathonAppState extends State<HackathonApp> {
                 },
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => CartScreen(),
-                    ),
-                  );
-                },
-                child: const Text("Open Voice Assistant"),
-              ),
-            ),
+
           ],
         ),
       ),
