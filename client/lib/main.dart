@@ -133,4 +133,3 @@ class _HackathonAppState extends State<HackathonApp> {
     );
   }
 }
-

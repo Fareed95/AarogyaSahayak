@@ -1,5 +1,19 @@
 import 'package:flutter/material.dart';
 
+class NutritionScreen extends StatelessWidget {
+  const NutritionScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Nutrition'),
+      ),
+      body: const Center(
+        child: Text('Nutrition Screen Content'),
+      ),
+    );
+  }
 class VideoData {
   final String id;
   final String title;
@@ -787,4 +801,5 @@ class VideoCard extends StatelessWidget {
       ),
     );
   }
+>>>>>>> da432e39a4fd007c1b35cd606b4c40fd89ad3034
 }
