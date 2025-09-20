@@ -163,7 +163,7 @@ REST_FRAMEWORK = {
     ),
 }
 
-ALLOWED_HOSTS = [ 'flutter-demo-c7cg.onrender.com','127.0.0.1', 'localhost']
+ALLOWED_HOSTS = [ 'codenebula-internal-round-25.onrender.com','127.0.0.1', 'localhost']
 
 # Middleware adjustments for static files
 MIDDLEWARE += [
