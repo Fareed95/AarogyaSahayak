@@ -34,36 +34,10 @@ class _LayoutState extends State<Layout> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< HEAD
-      HomeScreen(),
-      cart_screen(),
-      const order_screen(),
-      const profile_screen(),
-=======
-      const HomeDashboardScreen(), 
-      const CommunityScreen(), 
-      const AIHealthChatbotScreen(), 
-      const NutritionScanScreen(), 
->>>>>>> f5951477d6de4c2a90880f5404c0d12bb62bf1c3
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
       home_screen(),
       cart_screen(),
       const order_screen(),
       const profile_screen(),
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
     ];
 
     return Scaffold(
