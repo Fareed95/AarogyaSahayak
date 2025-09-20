@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../component/QRGenerator.dart';
+
 class UserProfile {
   final int id;
   final String name;
@@ -256,7 +258,9 @@ class _ProfileScreenState extends State<profile_screen> {
             const SizedBox(height: 20),
             
             _buildProfileHeader(),
-            
+            const SizedBox(height: 24),
+
+            _buildQR(),
             const SizedBox(height: 24),
             
             _buildAccountInfoSection(),
@@ -271,7 +275,16 @@ class _ProfileScreenState extends State<profile_screen> {
       ),
     );
   }
-
+  Widget _buildQR(){
+    return QRGenerator(
+      data: userProfile.email,       // ← The data to encode
+      size: 250,                          // Optional: custom size
+      backgroundColor: Colors.white,      // Optional: background color
+      foregroundColor: Colors.black, // Optional: QR color
+      errorText: 'Could not generate QR', // Optional: custom error text
+      padding: const EdgeInsets.all(24),  // Optional: custom padding
+    );
+  }
   Widget _buildProfileHeader() {
     return Container(
       padding: const EdgeInsets.all(20),
