@@ -129,15 +129,14 @@ class _hackathonAppState extends State<hackathonApp> {
       debugShowCheckedModeBanner: false,
       theme: isDarkMode ? AppTheme.darkTheme : AppTheme.lightTheme,
       home: Scaffold(
-        body: Medical_screen()
-        // Layout(
-        //   isDarkMode: isDarkMode,
-        //   onThemeToggle: () {
-        //     setState(() {
-        //       isDarkMode = !isDarkMode;
-        //     });
-        //   },
-        // ),
+        body: Layout(
+          isDarkMode: isDarkMode,
+          onThemeToggle: () {
+            setState(() {
+              isDarkMode = !isDarkMode;
+            });
+          },
+        ),
 
       ),
     );
