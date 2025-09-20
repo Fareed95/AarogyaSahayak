@@ -31,6 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 <<<<<<< HEAD
   flutter_sound: ^9.2.13
   audioplayers: 5.2.1
@@ -41,6 +42,8 @@ dependencies:
   cached_network_image: ^3.3.0
   camera: ^0.10.5
   mobile_scanner: ^4.0.0
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
   http: ^1.2.2
@@ -57,7 +60,11 @@ dependencies:
   permission_handler: ^11.0.0
   image_picker: ^1.0.4
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
   web_socket_channel: ^2.3.0
+=======
+  record: ^6.0.0
+>>>>>>> Stashed changes
 =======
   record: ^6.0.0
 >>>>>>> Stashed changes

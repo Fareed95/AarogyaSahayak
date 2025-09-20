@@ -35,6 +35,7 @@ class _LayoutState extends State<Layout> {
   Widget build(BuildContext context) {
     final pages = [
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 <<<<<<< HEAD
       HomeScreen(),
       cart_screen(),
@@ -47,10 +48,15 @@ class _LayoutState extends State<Layout> {
       const NutritionScanScreen(), 
 >>>>>>> f5951477d6de4c2a90880f5404c0d12bb62bf1c3
 =======
+=======
+>>>>>>> Stashed changes
       home_screen(),
       cart_screen(),
       const order_screen(),
       const profile_screen(),
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
     ];
 
