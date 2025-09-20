@@ -30,6 +30,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+<<<<<<< Updated upstream
 <<<<<<< HEAD
   flutter_sound: ^9.2.13
   audioplayers: 5.2.1
@@ -40,6 +41,8 @@ dependencies:
   cached_network_image: ^3.3.0
   camera: ^0.10.5
   mobile_scanner: ^4.0.0
+=======
+>>>>>>> Stashed changes
   http: ^1.2.2
 >>>>>>> f5951477d6de4c2a90880f5404c0d12bb62bf1c3
   cupertino_icons: ^1.0.8
@@ -53,7 +56,11 @@ dependencies:
   qr_flutter: ^4.1.0
   permission_handler: ^11.0.0
   image_picker: ^1.0.4
+<<<<<<< Updated upstream
   web_socket_channel: ^2.3.0
+=======
+  record: ^6.0.0
+>>>>>>> Stashed changes
 dev_dependencies:
   flutter_test:
     sdk: flutter

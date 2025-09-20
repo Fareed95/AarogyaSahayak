@@ -1,641 +1,371 @@
-// import 'package:flutter/material.dart';
-// import 'package:flutter/services.dart';
-// import 'package:sizer/sizer.dart';
-// import 'package:http/http.dart' as http;
-// import 'dart:convert';
-// import '../services/info.dart';
-// import '../services/secure_storage_service.dart';
-// import '../component/custom_snackbar.dart';
-// import 'forgotPassword.dart';
-// import 'register_screen.dart';
+import '../services/info.dart';
+import 'package:flutter/material.dart';
+import 'forgotPassword.dart';
+import 'register_screen.dart';
+import '../component/custom_snackbar.dart.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import '../services/secure_storage_service.dart';
 
-// class LoginScreen extends StatefulWidget {
-//   const LoginScreen({super.key});
+class login_screen extends StatefulWidget {
+  const login_screen({super.key});
 
-//   @override
-//   State<LoginScreen> createState() => _LoginScreenState();
-// }
+  @override
+  State<login_screen> createState() => _LoginPageState();
+}
 
-// class _LoginScreenState extends State<LoginScreen>
-//     with TickerProviderStateMixin {
-//   bool _isLoading = false;
-//   bool _isSocialLoading = false;
-//   bool _isPasswordVisible = false;
-  
-//   late AnimationController _fadeController;
-//   late AnimationController _slideController;
-//   late Animation<double> _fadeAnimation;
-//   late Animation<Offset> _slideAnimation;
+class _LoginPageState extends State<login_screen> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isPasswordVisible = false;
+  bool _isLoading = false;
 
-//   final _formKey = GlobalKey<FormState>();
-//   final _emailController = TextEditingController();
-//   final _passwordController = TextEditingController();
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
-//   // Color palette
-//   static const Color primaryColor = Color(0xFF14213D);
-//   static const Color accentColor = Color(0xFFFCA311);
-//   static const Color neutralLight = Color(0xFFE5E5E5);
-//   static const Color neutralWhite = Color(0xFFFFFFFF);
-//   static const Color neutralBlack = Color(0xFF000000);
+  Future<void> _login() async {
+    if (_formKey.currentState!.validate()) {
+      try {
+        // API endpoint
+        const String apiUrl = 'https://flutter-demo-c7cg.onrender.com/login/';
 
-//   @override
-//   void initState() {
-//     super.initState();
-//     _initializeAnimations();
-//     _startAnimations();
-//   }
+        // Prepare the request body
+        final Map<String, dynamic> requestBody = {
+          'email': _emailController.text.trim(),
+          'password': _passwordController.text,
+        };
 
-//   void _initializeAnimations() {
-//     _fadeController = AnimationController(
-//       duration: const Duration(milliseconds: 1000),
-//       vsync: this,
-//     );
+        // Make POST request
+        final response = await http.post(
+          Uri.parse(apiUrl),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
 
-//     _slideController = AnimationController(
-//       duration: const Duration(milliseconds: 800),
-//       vsync: this,
-//     );
+          },
+          body: jsonEncode(requestBody),
+        );
 
-//     _fadeAnimation = Tween<double>(
-//       begin: 0.0,
-//       end: 1.0,
-//     ).animate(CurvedAnimation(
-//       parent: _fadeController,
-//       curve: Curves.easeInOut,
-//     ));
+        // Handle response
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          // Success
+          final responseData = jsonDecode(response.body);
+            await SecureStorageService().storeJwtToken(responseData['jwt']);
+            print("token stored successfully");
+            print(responseData['jwt']);
+          // Show success message
+          AwesomeSnackbar.success(
+              context,
+              "Registration Successful",
+              "Please check your email for the verification code"
+          );
+            Info().setLoggedIn(true);
+          Navigator.pop(context);
 
-//     _slideAnimation = Tween<Offset>(
-//       begin: const Offset(0, 0.3),
-//       end: Offset.zero,
-//     ).animate(CurvedAnimation(
-//       parent: _slideController,
-//       curve: Curves.easeOutCubic,
-//     ));
-//   }
+          _emailController.clear();
+          _passwordController.clear();
+        } else {
+          // Error - show appropriate message
+          final errorData = jsonDecode(response.body);
+          print(errorData);
 
-//   void _startAnimations() {
-//     Future.delayed(const Duration(milliseconds: 300), () {
-//       _fadeController.forward();
-//     });
+          // Show error message based on API response
+          String errorMessage = "Registration failed";
+          if (errorData.containsKey('message')) {
+            errorMessage = errorData['message'];
+          } else if (errorData.containsKey('error')) {
+            errorMessage = errorData['error'];
+          }
 
-//     Future.delayed(const Duration(milliseconds: 500), () {
-//       _slideController.forward();
-//     });
-//   }
+          AwesomeSnackbar.error(context, "Login Failed", errorMessage);
+        }
+      } catch (error) {
+        // Network or other errors
+        print(error);
+        AwesomeSnackbar.error(
+            context,
+            "Network Error",
+            "Please check your internet connection and try again"
+        );
+      }
+    }
+  }
 
-//   @override
-//   void dispose() {
-//     _fadeController.dispose();
-//     _slideController.dispose();
-//     _emailController.dispose();
-//     _passwordController.dispose();
-//     super.dispose();
-//   }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            children: [
+              const SizedBox(height: 80),
+              // App Logo and Title
+              _buildHeader(),
+              const SizedBox(height: 48),
+              // Login Form
+              _buildLoginForm(),
+              const SizedBox(height: 32),
+              // Login Button
+              _buildLoginButton(),
+              const SizedBox(height: 24),
+              // Divider
+              _buildDivider(),
+              const SizedBox(height: 24),
+              // Social Login Options
+              _buildSocialLogin(),
+              const SizedBox(height: 32),
+              // Sign Up Link
+              _buildSignUpLink(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-//   Future<void> _login() async {
-//     if (_formKey.currentState!.validate()) {
-//       setState(() {
-//         _isLoading = true;
-//       });
+  Widget _buildHeader() {
+    return Column(
+      children: [
+        Container(
+          width: 100,
+          height: 100,
 
-//       try {
-//         // API endpoint
-//         const String apiUrl = 'https://flutter-demo-c7cg.onrender.com/login/';
 
-//         // Prepare the request body
-//         final Map<String, dynamic> requestBody = {
-//           'email': _emailController.text.trim(),
-//           'password': _passwordController.text,
-//         };
+        ),
+        const SizedBox(height: 24),
+        Text(
+          'hackathon',
+          style: TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            color: Colors.blue.shade800,
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Sign in to continue',
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.grey.shade600,
+          ),
+        ),
+      ],
+    );
+  }
 
-//         // Make POST request
-//         final response = await http.post(
-//           Uri.parse(apiUrl),
-//           headers: <String, String>{
-//             'Content-Type': 'application/json; charset=UTF-8',
-//           },
-//           body: jsonEncode(requestBody),
-//         );
+  Widget _buildLoginForm() {
+    return Form(
+      key: _formKey,
+      child: Column(
+        children: [
+          // Email Field
+          TextFormField(
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+            decoration: InputDecoration(
+              labelText: 'Email Address',
+              prefixIcon: Icon(Icons.email_outlined, color: Colors.blue.shade600),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.blue.shade200),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.blue.shade600, width: 2),
+              ),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your email';
+              }
+              if (!value.contains('@')) {
+                return 'Please enter a valid email';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 20),
+          // Password Field
+          TextFormField(
+            controller: _passwordController,
+            obscureText: !_isPasswordVisible,
+            decoration: InputDecoration(
+              labelText: 'Password',
+              prefixIcon: Icon(Icons.lock_outline, color: Colors.blue.shade600),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                  color: Colors.blue.shade600,
+                ),
+                onPressed: () {
+                  setState(() => _isPasswordVisible = !_isPasswordVisible);
+                },
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.blue.shade200),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.blue.shade600, width: 2),
+              ),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your password';
+              }
+              if (value.length < 6) {
+                return 'Password must be at least 6 characters';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+          // Forgot Password
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => ForgotPasswordPage()));},
+              child: Text(
+                'Forgot Password?',
+                style: TextStyle(
+                  color: Colors.blue.shade600,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-//         // Handle response
-//         if (response.statusCode == 200 || response.statusCode == 201) {
-//           // Success
-//           final responseData = jsonDecode(response.body);
-//           await SecureStorageService().storeJwtToken(responseData['jwt']);
-          
-//           // Provide haptic feedback
-//           HapticFeedback.mediumImpact();
+  Widget _buildLoginButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : _login,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.blue.shade700,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 2,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+        ),
+        child: _isLoading
+            ? const SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            valueColor: AlwaysStoppedAnimation(Colors.white),
+          ),
+        )
+            : const Text(
+          'Sign In',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
 
-//           // Show success message
-//           AwesomeSnackbar.success(
-//             context,
-//             "Login Successful",
-//             "Welcome back! Redirecting to dashboard..."
-//           );
+  Widget _buildDivider() {
+    return Row(
+      children: [
+        Expanded(
+          child: Divider(color: Colors.grey.shade300),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            'Or continue with',
+            style: TextStyle(
+              color: Colors.grey.shade600,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Divider(color: Colors.grey.shade300),
+        ),
+      ],
+    );
+  }
 
-//           Info().setLoggedIn(true);
-          
-//           // Navigate to home dashboard
-//           Navigator.pushReplacementNamed(context, '/home-dashboard');
+  Widget _buildSocialLogin() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _buildSocialButton(
+          icon: Icons.g_mobiledata,
+          onPressed: () {},
+          color: Colors.red.shade400,
+        ),
 
-//           _emailController.clear();
-//           _passwordController.clear();
-//         } else {
-//           // Error - show appropriate message
-//           final errorData = jsonDecode(response.body);
-          
-//           HapticFeedback.heavyImpact();
+      ],
+    );
+  }
 
-//           String errorMessage = "Login failed";
-//           if (errorData.containsKey('message')) {
-//             errorMessage = errorData['message'];
-//           } else if (errorData.containsKey('error')) {
-//             errorMessage = errorData['error'];
-//           }
+  Widget _buildSocialButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+    required Color color,
+  }) {
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade200,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: IconButton(
+        icon: Icon(icon, color: color),
+        onPressed: onPressed,
+      ),
+    );
+  }
 
-//           AwesomeSnackbar.error(context, "Login Failed", errorMessage);
-//         }
-//       } catch (error) {
-//         // Network or other errors
-//         HapticFeedback.heavyImpact();
-//         AwesomeSnackbar.error(
-//           context,
-//           "Network Error",
-//           "Please check your internet connection and try again"
-//         );
-//       } finally {
-//         if (mounted) {
-//           setState(() {
-//             _isLoading = false;
-//           });
-//         }
-//       }
-//     }
-//   }
-
-//   Future<void> _handleGoogleLogin() async {
-//     setState(() {
-//       _isSocialLoading = true;
-//     });
-
-//     // Simulate Google login process
-//     await Future.delayed(const Duration(seconds: 3));
-
-//     if (mounted) {
-//       AwesomeSnackbar.info(
-//         context,
-//         "Coming Soon",
-//         "Google login feature will be available soon"
-//       );
-
-//       setState(() {
-//         _isSocialLoading = false;
-//       });
-//     }
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: const Color(0xFFF8F9FA),
-//       body: SafeArea(
-//         child: FadeTransition(
-//           opacity: _fadeAnimation,
-//           child: SlideTransition(
-//             position: _slideAnimation,
-//             child: SingleChildScrollView(
-//               physics: const BouncingScrollPhysics(),
-//               child: Container(
-//                 constraints: BoxConstraints(
-//                   minHeight: MediaQuery.of(context).size.height -
-//                       MediaQuery.of(context).padding.top -
-//                       MediaQuery.of(context).padding.bottom,
-//                 ),
-//                 child: Padding(
-//                   padding: EdgeInsets.symmetric(horizontal: 6.w),
-//                   child: Column(
-//                     crossAxisAlignment: CrossAxisAlignment.stretch,
-//                     children: [
-//                       SizedBox(height: 8.h),
-
-//                       // Healthcare Logo Section
-//                       _buildHealthcareLogo(),
-
-//                       SizedBox(height: 6.h),
-
-//                       // Welcome Text
-//                       Text(
-//                         'Welcome Back!',
-//                         textAlign: TextAlign.center,
-//                         style: TextStyle(
-//                           fontSize: 28.sp,
-//                           fontWeight: FontWeight.bold,
-//                           color: primaryColor,
-//                         ),
-//                       ),
-
-//                       SizedBox(height: 1.h),
-
-//                       Text(
-//                         'Sign in to continue your healthcare journey',
-//                         textAlign: TextAlign.center,
-//                         style: TextStyle(
-//                           fontSize: 14.sp,
-//                           color: neutralBlack.withOpacity(0.7),
-//                         ),
-//                       ),
-
-//                       SizedBox(height: 5.h),
-
-//                       // Login Form
-//                       _buildLoginForm(),
-
-//                       SizedBox(height: 4.h),
-
-//                       // Login Button
-//                       _buildLoginButton(),
-
-//                       SizedBox(height: 3.h),
-
-//                       // Divider
-//                       _buildDivider(),
-
-//                       SizedBox(height: 3.h),
-
-//                       // Social Login Section
-//                       _buildSocialLogin(),
-
-//                       SizedBox(height: 4.h),
-
-//                       // Sign Up Link
-//                       _buildSignUpLink(),
-
-//                       SizedBox(height: 3.h),
-//                     ],
-//                   ),
-//                 ),
-//               ),
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-
-//   Widget _buildHealthcareLogo() {
-//     return Container(
-//       padding: EdgeInsets.all(6.w),
-//       child: Column(
-//         children: [
-//           Container(
-//             width: 100,
-//             height: 100,
-//             decoration: BoxDecoration(
-//               gradient: LinearGradient(
-//                 begin: Alignment.topLeft,
-//                 end: Alignment.bottomRight,
-//                 colors: [
-//                   primaryColor,
-//                   accentColor,
-//                 ],
-//               ),
-//               borderRadius: BorderRadius.circular(24),
-//               boxShadow: [
-//                 BoxShadow(
-//                   color: primaryColor.withOpacity(0.3),
-//                   blurRadius: 20,
-//                   offset: const Offset(0, 10),
-//                 ),
-//               ],
-//             ),
-//             child: const Icon(
-//               Icons.local_hospital_rounded,
-//               size: 50,
-//               color: Colors.white,
-//             ),
-//           ),
-//           SizedBox(height: 2.h),
-//           Text(
-//             'HealthCare Assistant',
-//             style: TextStyle(
-//               fontSize: 20.sp,
-//               fontWeight: FontWeight.bold,
-//               color: primaryColor,
-//               letterSpacing: 1.2,
-//             ),
-//           ),
-//           Text(
-//             'Your Health, Our Priority',
-//             style: TextStyle(
-//               fontSize: 12.sp,
-//               color: neutralBlack.withOpacity(0.6),
-//               fontStyle: FontStyle.italic,
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   Widget _buildLoginForm() {
-//     return Container(
-//       padding: EdgeInsets.all(6.w),
-//       decoration: BoxDecoration(
-//         color: neutralWhite,
-//         borderRadius: BorderRadius.circular(20),
-//         boxShadow: [
-//           BoxShadow(
-//             color: primaryColor.withOpacity(0.1),
-//             blurRadius: 20,
-//             offset: const Offset(0, 10),
-//           ),
-//         ],
-//       ),
-//       child: Form(
-//         key: _formKey,
-//         child: Column(
-//           children: [
-//             // Email Field
-//             TextFormField(
-//               controller: _emailController,
-//               keyboardType: TextInputType.emailAddress,
-//               style: TextStyle(
-//                 fontSize: 14.sp,
-//                 color: neutralBlack,
-//               ),
-//               decoration: InputDecoration(
-//                 labelText: 'Email Address',
-//                 labelStyle: TextStyle(color: neutralBlack.withOpacity(0.7)),
-//                 prefixIcon: Icon(
-//                   Icons.email_outlined,
-//                   color: primaryColor,
-//                 ),
-//                 border: OutlineInputBorder(
-//                   borderRadius: BorderRadius.circular(16),
-//                   borderSide: BorderSide(color: neutralLight),
-//                 ),
-//                 focusedBorder: OutlineInputBorder(
-//                   borderRadius: BorderRadius.circular(16),
-//                   borderSide: BorderSide(color: primaryColor, width: 2),
-//                 ),
-//                 filled: true,
-//                 fillColor: const Color(0xFFF8F9FA),
-//               ),
-//               validator: (value) {
-//                 if (value == null || value.isEmpty) {
-//                   return 'Please enter your email';
-//                 }
-//                 if (!value.contains('@')) {
-//                   return 'Please enter a valid email';
-//                 }
-//                 return null;
-//               },
-//             ),
-//             SizedBox(height: 3.h),
-            
-//             // Password Field
-//             TextFormField(
-//               controller: _passwordController,
-//               obscureText: !_isPasswordVisible,
-//               style: TextStyle(
-//                 fontSize: 14.sp,
-//                 color: neutralBlack,
-//               ),
-//               decoration: InputDecoration(
-//                 labelText: 'Password',
-//                 labelStyle: TextStyle(color: neutralBlack.withOpacity(0.7)),
-//                 prefixIcon: Icon(
-//                   Icons.lock_outline,
-//                   color: primaryColor,
-//                 ),
-//                 suffixIcon: IconButton(
-//                   icon: Icon(
-//                     _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-//                     color: primaryColor,
-//                   ),
-//                   onPressed: () {
-//                     setState(() => _isPasswordVisible = !_isPasswordVisible);
-//                   },
-//                 ),
-//                 border: OutlineInputBorder(
-//                   borderRadius: BorderRadius.circular(16),
-//                   borderSide: BorderSide(color: neutralLight),
-//                 ),
-//                 focusedBorder: OutlineInputBorder(
-//                   borderRadius: BorderRadius.circular(16),
-//                   borderSide: BorderSide(color: primaryColor, width: 2),
-//                 ),
-//                 filled: true,
-//                 fillColor: const Color(0xFFF8F9FA),
-//               ),
-//               validator: (value) {
-//                 if (value == null || value.isEmpty) {
-//                   return 'Please enter your password';
-//                 }
-//                 if (value.length < 6) {
-//                   return 'Password must be at least 6 characters';
-//                 }
-//                 return null;
-//               },
-//             ),
-            
-//             SizedBox(height: 2.h),
-            
-//             // Forgot Password
-//             Align(
-//               alignment: Alignment.centerRight,
-//               child: TextButton(
-//                 onPressed: () {
-//                   Navigator.push(
-//                     context,
-//                     MaterialPageRoute(builder: (context) => ForgotPasswordPage())
-//                   );
-//                 },
-//                 child: Text(
-//                   'Forgot Password?',
-//                   style: TextStyle(
-//                     color: primaryColor,
-//                     fontWeight: FontWeight.w600,
-//                     fontSize: 12.sp,
-//                   ),
-//                 ),
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-//   Widget _buildLoginButton() {
-//     return Container(
-//       width: double.infinity,
-//       height: 56,
-//       decoration: BoxDecoration(
-//         gradient: LinearGradient(
-//           begin: Alignment.centerLeft,
-//           end: Alignment.centerRight,
-//           colors: [primaryColor, primaryColor.withOpacity(0.8)],
-//         ),
-//         borderRadius: BorderRadius.circular(16),
-//         boxShadow: [
-//           BoxShadow(
-//             color: primaryColor.withOpacity(0.4),
-//             blurRadius: 15,
-//             offset: const Offset(0, 8),
-//           ),
-//         ],
-//       ),
-//       child: ElevatedButton(
-//         onPressed: _isLoading ? null : _login,
-//         style: ElevatedButton.styleFrom(
-//           backgroundColor: Colors.transparent,
-//           shadowColor: Colors.transparent,
-//           shape: RoundedRectangleBorder(
-//             borderRadius: BorderRadius.circular(16),
-//           ),
-//         ),
-//         child: _isLoading
-//             ? const SizedBox(
-//                 width: 24,
-//                 height: 24,
-//                 child: CircularProgressIndicator(
-//                   strokeWidth: 2,
-//                   valueColor: AlwaysStoppedAnimation(Colors.white),
-//                 ),
-//               )
-//             : Text(
-//                 'Sign In',
-//                 style: TextStyle(
-//                   fontSize: 16.sp,
-//                   fontWeight: FontWeight.bold,
-//                   color: Colors.white,
-//                 ),
-//               ),
-//       ),
-//     );
-//   }
-
-//   Widget _buildDivider() {
-//     return Row(
-//       children: [
-//         Expanded(
-//           child: Divider(color: neutralLight, thickness: 1),
-//         ),
-//         Padding(
-//           padding: EdgeInsets.symmetric(horizontal: 4.w),
-//           child: Text(
-//             'Or continue with',
-//             style: TextStyle(
-//               color: neutralBlack.withOpacity(0.6),
-//               fontSize: 12.sp,
-//             ),
-//           ),
-//         ),
-//         Expanded(
-//           child: Divider(color: neutralLight, thickness: 1),
-//         ),
-//       ],
-//     );
-//   }
-
-//   Widget _buildSocialLogin() {
-//     return Row(
-//       mainAxisAlignment: MainAxisAlignment.center,
-//       children: [
-//         _buildSocialButton(
-//           icon: Icons.g_mobiledata,
-//           onPressed: _handleGoogleLogin,
-//           color: Colors.red.shade400,
-//           label: 'Google',
-//         ),
-//       ],
-//     );
-//   }
-
-//   Widget _buildSocialButton({
-//     required IconData icon,
-//     required VoidCallback onPressed,
-//     required Color color,
-//     required String label,
-//   }) {
-//     return GestureDetector(
-//       onTap: onPressed,
-//       child: Container(
-//         padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-//         decoration: BoxDecoration(
-//           color: neutralWhite,
-//           borderRadius: BorderRadius.circular(16),
-//           border: Border.all(color: neutralLight),
-//           boxShadow: [
-//             BoxShadow(
-//               color: Colors.grey.withOpacity(0.1),
-//               blurRadius: 10,
-//               offset: const Offset(0, 4),
-//             ),
-//           ],
-//         ),
-//         child: _isSocialLoading
-//             ? const SizedBox(
-//                 width: 24,
-//                 height: 24,
-//                 child: CircularProgressIndicator(strokeWidth: 2),
-//               )
-//             : Row(
-//                 mainAxisSize: MainAxisSize.min,
-//                 children: [
-//                   Icon(icon, color: color, size: 24),
-//                   SizedBox(width: 2.w),
-//                   Text(
-//                     'Continue with $label',
-//                     style: TextStyle(
-//                       color: neutralBlack,
-//                       fontWeight: FontWeight.w600,
-//                       fontSize: 14.sp,
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//       ),
-//     );
-//   }
-
-//   Widget _buildSignUpLink() {
-//     return Container(
-//       padding: EdgeInsets.all(4.w),
-//       decoration: BoxDecoration(
-//         color: neutralWhite,
-//         borderRadius: BorderRadius.circular(16),
-//         border: Border.all(color: neutralLight),
-//       ),
-//       child: Row(
-//         mainAxisAlignment: MainAxisAlignment.center,
-//         children: [
-//           Text(
-//             "Don't have an account? ",
-//             style: TextStyle(
-//               color: neutralBlack.withOpacity(0.7),
-//               fontSize: 14.sp,
-//             ),
-//           ),
-//           GestureDetector(
-//             onTap: () {
-//               Navigator.push(
-//                 context,
-//                 MaterialPageRoute(builder: (context) => SignupPage())
-//               );
-//             },
-//             child: Text(
-//               'Sign Up',
-//               style: TextStyle(
-//                 color: accentColor,
-//                 fontWeight: FontWeight.bold,
-//                 fontSize: 14.sp,
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
+  Widget _buildSignUpLink() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          "Don't have an account? ",
+          style: TextStyle(color: Colors.grey.shade600),
+        ),
+        GestureDetector(
+          onTap: () {
+           Navigator.push(context, MaterialPageRoute(builder: (context) => SignupPage(),));
+          },
+          child: Text(
+            'Sign Up',
+            style: TextStyle(
+              color: Colors.blue.shade700,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

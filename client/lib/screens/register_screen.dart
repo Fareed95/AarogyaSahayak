@@ -1,6 +1,6 @@
 import '../screens/otp_screen.dart';
 import 'package:flutter/material.dart';
-import '../component/custom_snackbar.dart';
+import '../component/custom_snackbar.dart.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 class SignupPage extends StatefulWidget {
