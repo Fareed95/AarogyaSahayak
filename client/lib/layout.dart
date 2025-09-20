@@ -1,13 +1,10 @@
-<<<<<<< HEAD
 import 'package:client/screens/community_home.dart';
 import 'package:client/screens/nutrition.dart'; // Import nutrition screen
 import 'package:client/screens/voice_agent.dart';
-=======
 import 'package:client/screens/community.dart';
 import 'package:client/screens/login_screen.dart';
 import 'package:client/screens/nutrition.dart';
 import 'package:client/services/info.dart';
->>>>>>> da432e39a4fd007c1b35cd606b4c40fd89ad3034
 import 'package:flutter/material.dart';
 import '../widgets/custom_drawer.dart';
 import '../screens/home_screen.dart';
