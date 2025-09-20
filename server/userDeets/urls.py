@@ -6,6 +6,5 @@ urlpatterns = [
     path('notification/', NotificationViewset.as_view()),  
     path('getmedicine/', getMedicineViewset.as_view()),  
     path('postmedicine/', PostMedicineView.as_view()),  
-    path('postmedicine/', PostMedicineView.as_view()),  
-    path('medicines/<int:pk>/', PostMedicineView.as_view())
+    path('postmedicine/<int:pk>/', PostMedicineView.as_view())
 ]
