@@ -56,7 +56,7 @@ class _hackathonAppState extends State<hackathonApp> {
     if (jwtToken != null) {
       try {
         // API endpoint
-        const String apiUrl = 'https://flutter-demo-c7cg.onrender.com/api/user/';
+        const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/user/';
 
         // Prepare the request body
         final Map<String, dynamic> requestBody = {
@@ -77,7 +77,7 @@ class _hackathonAppState extends State<hackathonApp> {
         if (response.statusCode == 200 || response.statusCode == 201) {
           // Success
           final responseData = jsonDecode(response.body);
-
+          print(responseData);
 
         } else {
           // Error - show appropriate message

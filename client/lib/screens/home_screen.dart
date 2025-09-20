@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:client/services/secure_storage_service.dart';
+
 import '../component/custom_snackbar.dart.dart';
 import '../services/info.dart';
 import 'login_screen.dart';
@@ -25,18 +27,20 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/authentication/user';
 
+      // Await the token here
+      var token = await SecureStorageService().getJwtToken();
+
       final response = await http.get(
         Uri.parse(apiUrl),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization':''
+          'Authorization': '$token', // usually 'Bearer <token>'
         },
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = jsonDecode(response.body);
 
-        print(responseData);
         bool doctor = responseData['is_doctor'];
         Info().setDoctor(doctor);
         bool medical = responseData['is_medical_store'];
@@ -51,7 +55,6 @@ class _HomeScreenState extends State<HomeScreen> {
         } else if (errorData.containsKey('error')) {
           errorMessage = errorData['error'];
         }
-        // Optionally show the error message
         AwesomeSnackbar.error(context, "Error", errorMessage);
       }
     } catch (error) {
@@ -63,6 +66,8 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
   }
+
+
 
   @override
   Widget build(BuildContext context) {

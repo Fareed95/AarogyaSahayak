@@ -3,7 +3,7 @@ from authentication.models import User
 
 class UserDeets(models.Model):
     userid = models.AutoField(primary_key=True)
-    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)  
+    user = models.OneToOneField(User, on_delete=models.CASCADE)  
     username = models.CharField(max_length=50)
     phoneNo = models.CharField(max_length=14, blank=True, null=True)  
     email =models.EmailField()

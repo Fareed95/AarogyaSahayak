@@ -1,5 +1,7 @@
 import 'package:client/screens/community.dart';
+import 'package:client/screens/login_screen.dart';
 import 'package:client/screens/nutrition.dart';
+import 'package:client/services/info.dart';
 import 'package:flutter/material.dart';
 import '../widgets/custom_drawer.dart';
 import '../screens/home_screen.dart';
@@ -46,6 +48,34 @@ class _LayoutState extends State<Layout> {
         title: Text("Hackathon"),
         centerTitle: true,
         actions: [
+          FutureBuilder(future: Info().isLoggedIn(), builder: (context,snapshot) {
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            return snapshot.data!
+                ? Center()
+                : TextButton(
+              onPressed: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => login_screen(),));
+              },
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                // keeps it small
+                foregroundColor: Colors.white,
+                side: const BorderSide(color: Colors.white),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(
+                      15), // optional rounded corners
+                ),
+              ),
+              child: const Text(
+                'Login',
+                style: TextStyle(fontSize: 14), // small text
+              ),
+            );
+          }),
           ThemeSwitch(
             isDarkMode: widget.isDarkMode,
             onToggle: widget.onThemeToggle,
