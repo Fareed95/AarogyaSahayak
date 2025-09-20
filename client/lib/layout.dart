@@ -1,8 +1,9 @@
+import 'package:client/screens/community.dart';
+import 'package:client/screens/nutrition.dart';
 import 'package:flutter/material.dart';
 import '../widgets/custom_drawer.dart';
 import '../screens/home_screen.dart';
-import '../screens/cart_screen.dart';
-import '../screens/orders_screen.dart';
+
 import '../screens/profile_screen.dart';
 import '../widgets/theme_switch.dart';
 class Layout extends StatefulWidget {
@@ -34,10 +35,10 @@ class _LayoutState extends State<Layout> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      home_screen(),
-      cart_screen(),
-      const order_screen(),
-      const profile_screen(),
+      HomeScreen(),
+      community(),
+      nutrition(),
+      profile_screen(),
     ];
 
     return Scaffold(
@@ -66,9 +67,9 @@ class _LayoutState extends State<Layout> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
           BottomNavigationBarItem(
-              icon: Icon(Icons.shopping_cart), label: "Cart"),
+              icon: Icon(Icons.group), label: "community"),
           BottomNavigationBarItem(
-              icon: Icon(Icons.receipt_long), label: "Orders"),
+              icon: Icon(Icons.medication), label: "nutrition"),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "My Info"),
         ],
       ),
