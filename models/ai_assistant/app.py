@@ -1,8 +1,10 @@
 import os
 import tempfile
+import uuid
+import asyncio
 from typing import List, Dict, Optional
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from groq import Groq
@@ -13,6 +15,8 @@ import io
 import speech_recognition as sr
 from gtts import gTTS
 import base64
+from datetime import datetime, timedelta
+import json
 
 # Load environment variables
 load_dotenv()
@@ -34,9 +38,20 @@ app.add_middleware(
 client = Groq(api_key=GROQ_API_KEY)
 
 # ---------------- Models ----------------
-class AudioRequest(BaseModel):
-    conversation_id: str = "default"
-    prompt: Optional[str] = None
+class StartCallRequest(BaseModel):
+    user_id: str
+
+class EndCallRequest(BaseModel):
+    session_id: str
+
+class VoiceChatRequest(BaseModel):
+    user_id: str
+    audio_data: str
+    session_id: str
+
+# Store active sessions and connections
+active_sessions = {}
+active_connections = {}
 
 # ---------------- Helpers ----------------
 def extract_text_from_image(image_data: bytes) -> str:
@@ -51,7 +66,7 @@ def extract_text_from_image(image_data: bytes) -> str:
 def process_audio_file(audio_data: bytes, filename: str) -> str:
     """Process audio file and convert to text"""
     recognizer = sr.Recognizer()
-    file_extension = os.path.splitext(filename)[1] if filename else ".webm"
+    file_extension = os.path.splitext(filename)[1] if filename else ".wav"
 
     with tempfile.NamedTemporaryFile(suffix=file_extension, delete=False) as temp_file:
         temp_file.write(audio_data)
@@ -87,7 +102,7 @@ def text_to_speech(text: str) -> str:
     """Convert text to speech and return base64 encoded audio"""
     try:
         with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as temp_file:
-            tts = gTTS(text=text, lang="en")
+            tts = gTTS(text=text, lang="en", slow=False)
             tts.save(temp_file.name)
             
             # Read the file and encode as base64
@@ -116,7 +131,225 @@ def query_groq_api(messages: List[Dict[str, str]]) -> str:
     except Exception as e:
         raise Exception(f"Error with Groq API: {str(e)}")
 
-# ---------------- Endpoints ----------------
+# ---------------- Voice Call Endpoints ----------------
+@app.post("/start-call")
+async def start_call(request: StartCallRequest):
+    """Start a new voice call session"""
+    try:
+        session_id = str(uuid.uuid4())
+        
+        # Create greeting message
+        greeting = "Hello! I'm Dr. Sarah, your voice medical assistant. How can I help you today?"
+        
+        # Generate audio greeting
+        audio_greeting = text_to_speech(greeting)
+        
+        # Store session
+        active_sessions[session_id] = {
+            "user_id": request.user_id,
+            "start_time": datetime.now(),
+            "last_activity": datetime.now(),
+            "conversation_history": [
+                {"role": "system", "content": "You are Dr. Sarah, a friendly medical assistant."},
+                {"role": "assistant", "content": greeting}
+            ]
+        }
+        
+        return {
+            "success": True,
+            "session_id": session_id,
+            "greeting": greeting,
+            "audio_greeting": audio_greeting
+        }
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"Failed to start call: {str(e)}"
+        }
+
+@app.post("/end-call")
+async def end_call(request: EndCallRequest):
+    """End a voice call session"""
+    try:
+        if request.session_id in active_sessions:
+            del active_sessions[request.session_id]
+        
+        # Close WebSocket connection if exists
+        if request.session_id in active_connections:
+            await active_connections[request.session_id].close()
+            del active_connections[request.session_id]
+        
+        return {"success": True, "message": "Call ended successfully"}
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f"Failed to end call: {str(e)}"
+        }
+
+@app.post("/voice-chat")
+async def voice_chat_endpoint(request: VoiceChatRequest):
+    """Process voice chat with audio data"""
+    try:
+        # Check if session exists
+        if request.session_id not in active_sessions:
+            return {
+                "success": False,
+                "response_text": "Session not found. Please start a new call.",
+                "audio_response": ""
+            }
+        
+        # Update last activity
+        active_sessions[request.session_id]["last_activity"] = datetime.now()
+        
+        # Decode base64 audio
+        audio_bytes = base64.b64decode(request.audio_data)
+        
+        # Process audio to text
+        transcribed_text = process_audio_file(audio_bytes, "voice_message.wav")
+        
+        if not transcribed_text:
+            return {
+                "success": False,
+                "response_text": "I couldn't understand that. Please try speaking again.",
+                "audio_response": ""
+            }
+        
+        # Add user message to conversation history
+        active_sessions[request.session_id]["conversation_history"].append({
+            "role": "user",
+            "content": transcribed_text
+        })
+        
+        # Get AI response using full conversation history
+        try:
+            ai_response = query_groq_api(active_sessions[request.session_id]["conversation_history"])
+            
+            # Add AI response to conversation history
+            active_sessions[request.session_id]["conversation_history"].append({
+                "role": "assistant",
+                "content": ai_response
+            })
+            
+            # Convert AI response to speech
+            audio_response = text_to_speech(ai_response)
+            
+        except Exception as e:
+            raise Exception(f"AI response failed: {str(e)}")
+        
+        return {
+            "success": True,
+            "response_text": ai_response,
+            "audio_response": audio_response
+        }
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "response_text": f"Sorry, I encountered an error: {str(e)}",
+            "audio_response": ""
+        }
+
+# ---------------- WebSocket for Real-time Voice Call ----------------
+@app.websocket("/ws/voice-call/{session_id}")
+async def websocket_voice_call(websocket: WebSocket, session_id: str):
+    await websocket.accept()
+    
+    # Verify session exists
+    if session_id not in active_sessions:
+        await websocket.send_json({
+            "type": "error",
+            "message": "Invalid session ID"
+        })
+        await websocket.close()
+        return
+    
+    # Store connection
+    active_connections[session_id] = websocket
+    
+    try:
+        # Send welcome message
+        await websocket.send_json({
+            "type": "status",
+            "message": "Connected to Dr. Sarah"
+        })
+        
+        while True:
+            # Receive audio data from client
+            data = await websocket.receive_json()
+            
+            if data.get("type") == "audio":
+                # Process audio data
+                audio_data = data.get("audio_data", "")
+                
+                if audio_data:
+                    # Decode base64 audio
+                    audio_bytes = base64.b64decode(audio_data)
+                    
+                    # Process audio to text
+                    transcribed_text = process_audio_file(audio_bytes, "voice_message.wav")
+                    
+                    if transcribed_text:
+                        print(f"User said: {transcribed_text}")
+                        
+                        # Add to conversation history
+                        active_sessions[session_id]["conversation_history"].append({
+                            "role": "user",
+                            "content": transcribed_text
+                        })
+                        
+                        # Get AI response
+                        ai_response = query_groq_api(active_sessions[session_id]["conversation_history"])
+                        
+                        # Add AI response to history
+                        active_sessions[session_id]["conversation_history"].append({
+                            "role": "assistant",
+                            "content": ai_response
+                        })
+                        
+                        # Convert to audio
+                        audio_response = text_to_speech(ai_response)
+                        
+                        # Send response back to client
+                        await websocket.send_json({
+                            "type": "response",
+                            "text": ai_response,
+                            "audio": audio_response
+                        })
+                    else:
+                        await websocket.send_json({
+                            "type": "response",
+                            "text": "I didn't catch that. Could you please repeat?",
+                            "audio": ""
+                        })
+            
+            elif data.get("type") == "end_call":
+                # End the call
+                if session_id in active_sessions:
+                    del active_sessions[session_id]
+                await websocket.send_json({
+                    "type": "call_ended",
+                    "message": "Call ended successfully"
+                })
+                break
+                
+    except WebSocketDisconnect:
+        print(f"Client disconnected from session {session_id}")
+    except Exception as e:
+        print(f"WebSocket error: {e}")
+        await websocket.send_json({
+            "type": "error",
+            "message": f"Connection error: {str(e)}"
+        })
+    finally:
+        # Clean up
+        if session_id in active_connections:
+            del active_connections[session_id]
+        if session_id in active_sessions:
+            del active_sessions[session_id]
+
+# ---------------- Existing Endpoints (Keep these) ----------------
 @app.post("/process_image_ocr/")
 async def process_image_ocr(
     conversation_id: str = Form("default"),
@@ -225,53 +458,6 @@ async def process_audio(
         "user_prompt": prompt
     })
 
-@app.post("/voice_chat/")
-async def voice_chat(
-    conversation_id: str = Form(...), 
-    audio: UploadFile = File(...)
-):
-    """Process audio and return only AI response without showing transcribed text"""
-    if not audio.content_type.startswith("audio/"):
-        raise HTTPException(status_code=400, detail="File must be an audio file")
-    audio_data = await audio.read()
-    try:
-        transcribed_text = process_audio_file(audio_data, audio.filename or "audio.webm")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-    if not transcribed_text:
-        raise HTTPException(status_code=400, detail="No speech could be recognized from the audio")
-    
-    # Prepare messages for Groq API
-    messages = [
-        {
-            "role": "system",
-            "content": (
-                "You are an intelligent AI assistant designed to assist you."
-               
-            ),
-        },
-        {
-            "role": "user",
-            "content": transcribed_text
-        }
-    ]
-    
-    try:
-        ai_response = query_groq_api(messages)
-        
-        # Convert AI response to speech
-        audio_response_file = text_to_speech(ai_response)
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-    return JSONResponse({
-        "ai_response": ai_response,
-        "audio_url": f"/download_audio/{os.path.basename(audio_response_file)}",
-        "conversation_id": conversation_id,
-    })
-
 @app.post("/text_chat/")
 async def text_chat(
     conversation_id: str = Form("default"),
@@ -307,3 +493,28 @@ async def text_chat(
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+# Clean up old sessions periodically
+@app.on_event("startup")
+async def startup_event():
+    async def cleanup_sessions():
+        while True:
+            await asyncio.sleep(300)  # Clean up every 5 minutes
+            now = datetime.now()
+            sessions_to_remove = []
+            for session_id, session_data in active_sessions.items():
+                if now - session_data["last_activity"] > timedelta(minutes=30):
+                    sessions_to_remove.append(session_id)
+            
+            for session_id in sessions_to_remove:
+                if session_id in active_sessions:
+                    del active_sessions[session_id]
+                if session_id in active_connections:
+                    await active_connections[session_id].close()
+                    del active_connections[session_id]
+    
+    asyncio.create_task(cleanup_sessions())
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
