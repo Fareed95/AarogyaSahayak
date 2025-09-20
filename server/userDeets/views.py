@@ -16,21 +16,17 @@ from google.auth.transport.requests import Request
 from utils.usercheck import authenticate_request
 class UserDeetsViewSet(APIView):
     def get(self,request):
-            token = request.headers.get('Authorization')
-
-            if not token:
-                raise AuthenticationFailed('Unauthenticated!')
-
+            print("starting point")
+            user = authenticate_request(request, need_user=True)
+            print(user)
+            userdetails = UserDeets.objects.filter(userid=user.id).first()    
+            print(userdetails) 
             try:
-                
-                payload = jwt.decode(token, 'secret', algorithms="HS256")
-            except jwt.ExpiredSignatureError:
-                raise AuthenticationFailed('Token expired!')
-            except jwt.InvalidTokenError:
-                raise AuthenticationFailed('Invalid token!')
-
-            user = UserDeets.objects.filter(email=payload['email']).first()    
-            serializer = accountSerializers(user)
+                print("inside try")
+                serializer = accountSerializers(userdetails)
+                print(serializer.data)
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
             return Response(serializer.data)
 
