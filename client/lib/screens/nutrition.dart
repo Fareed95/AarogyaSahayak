@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 
-class nutrition extends StatefulWidget {
-  const nutrition({super.key});
+class NutritionScreen extends StatelessWidget {
+  const NutritionScreen({super.key});
 
-  @override
-  State<nutrition> createState() => _nutritionState();
-}
-
-class _nutritionState extends State<nutrition> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Text("nutrition")
+      appBar: AppBar(
+        title: const Text('Nutrition'),
+      ),
+      body: const Center(
+        child: Text('Nutrition Screen Content'),
+      ),
     );
   }
 }

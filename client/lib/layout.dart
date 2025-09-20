@@ -1,11 +1,12 @@
-import 'package:client/screens/community.dart';
-import 'package:client/screens/nutrition.dart';
+import 'package:client/screens/community_home.dart';
+import 'package:client/screens/nutrition.dart'; // Import nutrition screen
+import 'package:client/screens/voice_agent.dart';
 import 'package:flutter/material.dart';
 import '../widgets/custom_drawer.dart';
 import '../screens/home_screen.dart';
-
 import '../screens/profile_screen.dart';
 import '../widgets/theme_switch.dart';
+
 class Layout extends StatefulWidget {
   final bool isDarkMode;
   final VoidCallback onThemeToggle;
@@ -23,8 +24,6 @@ class Layout extends StatefulWidget {
 class _LayoutState extends State<Layout> {
   int selectedIndex = 0;
 
-
-
   void _onDrawerItemTap(int index) {
     Navigator.pop(context); // close drawer
     setState(() {
@@ -36,20 +35,14 @@ class _LayoutState extends State<Layout> {
   Widget build(BuildContext context) {
     final pages = [
       HomeScreen(),
-<<<<<<< HEAD
-      cart_screen(),
-      const order_screen(),
+      const CommunityApiService(),
+      const NutritionScreen(), // Use NutritionScreen (not nutrition)
       const profile_screen(),
-=======
-      community(),
-      nutrition(),
-      profile_screen(),
->>>>>>> c212cdb29c129226f411376acf4104ef8eaac5cc
     ];
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Hackathon"),
+        title: const Text("Hackathon"),
         centerTitle: true,
         actions: [
           ThemeSwitch(
@@ -73,9 +66,9 @@ class _LayoutState extends State<Layout> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
           BottomNavigationBarItem(
-              icon: Icon(Icons.group), label: "community"),
+              icon: Icon(Icons.group), label: "Community"),
           BottomNavigationBarItem(
-              icon: Icon(Icons.medication), label: "nutrition"),
+              icon: Icon(Icons.medication), label: "Nutrition"),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "My Info"),
         ],
       ),
