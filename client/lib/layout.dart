@@ -1,6 +1,13 @@
+<<<<<<< HEAD
 import 'package:client/screens/community_home.dart';
 import 'package:client/screens/nutrition.dart'; // Import nutrition screen
 import 'package:client/screens/voice_agent.dart';
+=======
+import 'package:client/screens/community.dart';
+import 'package:client/screens/login_screen.dart';
+import 'package:client/screens/nutrition.dart';
+import 'package:client/services/info.dart';
+>>>>>>> da432e39a4fd007c1b35cd606b4c40fd89ad3034
 import 'package:flutter/material.dart';
 import '../widgets/custom_drawer.dart';
 import '../screens/home_screen.dart';
@@ -10,20 +17,17 @@ import '../widgets/theme_switch.dart';
 class Layout extends StatefulWidget {
   final bool isDarkMode;
   final VoidCallback onThemeToggle;
-
   const Layout({
     super.key,
     required this.isDarkMode,
     required this.onThemeToggle,
   });
-
   @override
   State<Layout> createState() => _LayoutState();
 }
 
 class _LayoutState extends State<Layout> {
   int selectedIndex = 0;
-
   void _onDrawerItemTap(int index) {
     Navigator.pop(context); // close drawer
     setState(() {
@@ -38,13 +42,45 @@ class _LayoutState extends State<Layout> {
       const CommunityApiService(),
       const NutritionScreen(), // Use NutritionScreen (not nutrition)
       const profile_screen(),
-    ];
 
+      CommunityApiService(), // Keep original lowercase if that's what exists in community.dart
+      NutritionScreen(), // This one we fixed
+      profile_screen(), // Keep original lowercase if that's what exists in profile_screen.dart
+    ];
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text("Hackathon"),
         centerTitle: true,
         actions: [
+          FutureBuilder(future: Info().isLoggedIn(), builder: (context,snapshot) {
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            return snapshot.data!
+                ? Center()
+                : TextButton(
+              onPressed: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => login_screen(),));
+              },
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                // keeps it small
+                foregroundColor: Colors.white,
+                side: const BorderSide(color: Colors.white),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(
+                      15), // optional rounded corners
+                ),
+              ),
+              child: const Text(
+                'Login',
+                style: TextStyle(fontSize: 14), // small text
+              ),
+            );
+          }),
           ThemeSwitch(
             isDarkMode: widget.isDarkMode,
             onToggle: widget.onThemeToggle,

@@ -2,8 +2,10 @@ from rest_framework import serializers
 from .models import UserDeets,Medicine,Dose
 
 class accountSerializers(serializers.ModelSerializer):
-    email = serializers.EmailField(source='user.email',read_only=True)
-    is_staff = serializers.EmailField(source='user.is_staff',read_only=True)
+    email = serializers.SerializerMethodField()
+    is_staff = serializers.SerializerMethodField()
+
+
     class Meta:
         model = UserDeets
         fields = [
@@ -16,6 +18,7 @@ class accountSerializers(serializers.ModelSerializer):
             'address',
             'fcm_token'
         ]
+
 
 
 class DoseSerializer(serializers.ModelSerializer):

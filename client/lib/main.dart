@@ -57,8 +57,10 @@ class _HackathonAppState extends State<HackathonApp> {
 
     if (jwtToken != null) {
       try {
-        const String apiUrl = 'https://flutter-demo-c7cg.onrender.com/api/user/';
+        // API endpoint
+        const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/user/';
         final Map<String, dynamic> requestBody = {'fcm_token': token};
+
 
         final response = await http.patch(
           Uri.parse(apiUrl),
@@ -71,6 +73,9 @@ class _HackathonAppState extends State<HackathonApp> {
 
         if (response.statusCode == 200 || response.statusCode == 201) {
           final responseData = jsonDecode(response.body);
+          print(responseData);
+
+
           print("FCM token updated successfully: $responseData");
         } else {
           final errorData = jsonDecode(response.body);
@@ -121,20 +126,7 @@ class _HackathonAppState extends State<HackathonApp> {
                 },
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => CartScreen(),
-                    ),
-                  );
-                },
-                child: const Text("Open Voice Assistant"),
-              ),
-            ),
+
           ],
         ),
       ),
