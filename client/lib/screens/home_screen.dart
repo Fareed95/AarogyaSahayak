@@ -6,21 +6,40 @@ import 'login_screen.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import '../screens/notification_screen.dart';
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:http/http.dart' as http;
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class HomeScreen
+    extends
+        StatefulWidget {
+  const HomeScreen({
+    super.key,
+  });
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
+class _HomeScreenState
+    extends
+        State<
+          HomeScreen
+        >
+    with
+        TickerProviderStateMixin {
   bool _isDoctor = false;
   bool _isMedical = false;
   late AnimationController _fadeController;
   late AnimationController _slideController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
+  late Animation<
+    double
+  >
+  _fadeAnimation;
+  late Animation<
+    Offset
+  >
+  _slideAnimation;
 
   @override
   void initState() {
@@ -31,30 +50,49 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   void _initAnimations() {
     _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(
+        milliseconds: 800,
+      ),
       vsync: this,
     );
     _slideController = AnimationController(
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(
+        milliseconds: 600,
+      ),
       vsync: this,
     );
-    
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeInOut,
-    ));
-    
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.5),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutCubic,
-    ));
-    
+
+    _fadeAnimation =
+        Tween<
+              double
+            >(
+              begin: 0.0,
+              end: 1.0,
+            )
+            .animate(
+              CurvedAnimation(
+                parent: _fadeController,
+                curve: Curves.easeInOut,
+              ),
+            );
+
+    _slideAnimation =
+        Tween<
+              Offset
+            >(
+              begin: const Offset(
+                0,
+                0.5,
+              ),
+              end: Offset.zero,
+            )
+            .animate(
+              CurvedAnimation(
+                parent: _slideController,
+                curve: Curves.easeOutCubic,
+              ),
+            );
+
     _fadeController.forward();
     _slideController.forward();
   }
@@ -66,47 +104,82 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  Future<void> _getUserData() async {
+  Future<
+    void
+  >
+  _getUserData() async {
     try {
       const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/authentication/user/';
 
       var token = await SecureStorageService().getJwtToken();
 
       final response = await http.get(
-        Uri.parse(apiUrl),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': '$token',
-        },
+        Uri.parse(
+          apiUrl,
+        ),
+        headers:
+            <
+              String,
+              String
+            >{
+              'Content-Type': 'application/json; charset=UTF-8',
+              'Authorization': '$token',
+            },
       );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final responseData = jsonDecode(response.body);
+      if (response.statusCode ==
+              200 ||
+          response.statusCode ==
+              201) {
+        final responseData = jsonDecode(
+          response.body,
+        );
 
         bool doctor = responseData['is_doctor'];
         bool medical = responseData['is_medical_store'];
 
-        setState(() {
-          _isDoctor = doctor;
-          _isMedical = medical;
-        });
+        setState(
+          () {
+            _isDoctor = doctor;
+            _isMedical = medical;
+          },
+        );
 
-        Info().setDoctor(doctor);
-        Info().setMedical(medical);
-
+        Info().setDoctor(
+          doctor,
+        );
+        Info().setMedical(
+          medical,
+        );
       } else {
-        final errorData = jsonDecode(response.body);
-        print(errorData);
+        final errorData = jsonDecode(
+          response.body,
+        );
+        print(
+          errorData,
+        );
         String errorMessage = "Registration failed";
-        if (errorData.containsKey('message')) {
+        if (errorData.containsKey(
+          'message',
+        )) {
           errorMessage = errorData['message'];
-        } else if (errorData.containsKey('error')) {
+        } else if (errorData.containsKey(
+          'error',
+        )) {
           errorMessage = errorData['error'];
         }
-        AwesomeSnackbar.error(context, "Error", errorMessage);
+        AwesomeSnackbar.error(
+          context,
+          "Error",
+          errorMessage,
+        );
       }
-    } catch (error) {
-      print(error);
+    } catch (
+      error
+    ) {
+      print(
+        error,
+      );
       AwesomeSnackbar.error(
         context,
         "Network Error",
@@ -115,17 +188,174 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
-  void _handleFileUpload() {
-    print("File upload initiated");
+  Future<
+    void
+  >
+  _handleFileUpload() async {
+    try {
+      // 1. Pick PDF file
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: [
+          'pdf',
+        ],
+      );
+
+      if (result ==
+          null) {
+        AwesomeSnackbar.error(
+          context,
+          "Cancelled",
+          "No file selected",
+        );
+        return;
+      }
+
+      File file = File(
+        result.files.single.path!,
+      );
+
+      // 2. Ask user for Title
+      String? title =
+          await showDialog<
+            String
+          >(
+            context: context,
+            builder:
+                (
+                  context,
+                ) {
+                  final TextEditingController _titleController = TextEditingController();
+                  return AlertDialog(
+                    title: const Text(
+                      "Enter Document Title",
+                    ),
+                    content: TextField(
+                      controller: _titleController,
+                      decoration: const InputDecoration(
+                        hintText: "e.g. Blood Report",
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(
+                          context,
+                          null,
+                        ),
+                        child: const Text(
+                          "Cancel",
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(
+                          context,
+                          _titleController.text.trim(),
+                        ),
+                        child: const Text(
+                          "Upload",
+                        ),
+                      ),
+                    ],
+                  );
+                },
+          );
+
+      if (title ==
+              null ||
+          title.isEmpty) {
+        AwesomeSnackbar.error(
+          context,
+          "Missing",
+          "Title is required",
+        );
+        return;
+      }
+
+      // 3. Get JWT Token
+      String? token = await SecureStorageService().getJwtToken();
+      if (token ==
+          null) {
+        AwesomeSnackbar.error(
+          context,
+          "Error",
+          "Not logged in. Please login again.",
+        );
+        return;
+      }
+
+      // 4. Create Multipart Request
+      var uri = Uri.parse(
+        "http://192.168.0.107:8000/api/reports/report/",
+      );
+      var request = http.MultipartRequest(
+        "POST",
+        uri,
+      );
+
+      request.headers["Authorization"] = "$token"; // ✅ Bearer token
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          "file",
+          file.path,
+        ),
+      );
+      request.fields["title"] = title;
+
+      // 5. Send Request
+      var response = await request.send();
+
+      if (response.statusCode ==
+              200 ||
+          response.statusCode ==
+              201) {
+        AwesomeSnackbar.success(
+          context,
+          "Success",
+          "Document uploaded successfully!",
+        );
+      } else {
+        final responseBody = await response.stream.bytesToString();
+        AwesomeSnackbar.error(
+          context,
+          "Upload Failed",
+          responseBody,
+        );
+      }
+    } catch (
+      e
+    ) {
+      print(
+        "Upload error: $e",
+      );
+      AwesomeSnackbar.error(
+        context,
+        "Error",
+        "Something went wrong while uploading.",
+      );
+    }
   }
 
   @override
-  Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final screenHeight = MediaQuery.of(context).size.height;
+  Widget build(
+    BuildContext context,
+  ) {
+    final bool isDark =
+        Theme.of(
+          context,
+        ).brightness ==
+        Brightness.dark;
+    final screenHeight = MediaQuery.of(
+      context,
+    ).size.height;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF000000) : const Color(0xFFFAFAFA),
+      backgroundColor: isDark
+          ? const Color(
+              0xFF000000,
+            )
+          : const Color(
+              0xFFFAFAFA,
+            ),
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: SingleChildScrollView(
@@ -133,35 +363,61 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           child: Column(
             children: [
               // Aesthetic Banner
-              _buildTopBanner(isDark),
-              
+              _buildTopBanner(
+                isDark,
+              ),
+
               SlideTransition(
                 position: _slideAnimation,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20.0,
+                  ),
                   child: Column(
                     children: [
-                      const SizedBox(height: 24),
-                      
+                      const SizedBox(
+                        height: 24,
+                      ),
+
                       // Upload Section
-                      _buildUploadSection(isDark),
-                      const SizedBox(height: 32),
+                      _buildUploadSection(
+                        isDark,
+                      ),
+                      const SizedBox(
+                        height: 32,
+                      ),
 
                       // Quick Access Section
-                      _buildQuickAccessSection(isDark),
-                      const SizedBox(height: 32),
+                      _buildQuickAccessSection(
+                        isDark,
+                      ),
+                      const SizedBox(
+                        height: 32,
+                      ),
 
                       // Features & Offers Section
-                      _buildFeaturesSection(isDark),
-                      const SizedBox(height: 32),
+                      _buildFeaturesSection(
+                        isDark,
+                      ),
+                      const SizedBox(
+                        height: 32,
+                      ),
 
                       // Assurance Section
-                      _buildAssuranceSection(isDark),
-                      const SizedBox(height: 32),
+                      _buildAssuranceSection(
+                        isDark,
+                      ),
+                      const SizedBox(
+                        height: 32,
+                      ),
 
                       // Footer
-                      _buildFooter(isDark),
-                      const SizedBox(height: 20),
+                      _buildFooter(
+                        isDark,
+                      ),
+                      const SizedBox(
+                        height: 20,
+                      ),
                     ],
                   ),
                 ),
@@ -173,29 +429,62 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildTopBanner(bool isDark) {
+  Widget _buildTopBanner(
+    bool isDark,
+  ) {
     return Container(
       width: double.infinity,
       height: 280, // Increased height for bigger image
-      margin: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+      margin: EdgeInsets.only(
+        top: MediaQuery.of(
+          context,
+        ).padding.top,
+      ),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            isDark ? const Color(0xFF14213D) : const Color(0xFF14213D).withOpacity(0.9),
-            isDark ? const Color(0xFF14213D).withOpacity(0.8) : const Color(0xFF14213D).withOpacity(0.7),
+            isDark
+                ? const Color(
+                    0xFF14213D,
+                  )
+                : const Color(
+                    0xFF14213D,
+                  ).withOpacity(
+                    0.9,
+                  ),
+            isDark
+                ? const Color(
+                    0xFF14213D,
+                  ).withOpacity(
+                    0.8,
+                  )
+                : const Color(
+                    0xFF14213D,
+                  ).withOpacity(
+                    0.7,
+                  ),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(24),
-          bottomRight: Radius.circular(24),
+          bottomLeft: Radius.circular(
+            24,
+          ),
+          bottomRight: Radius.circular(
+            24,
+          ),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withOpacity(
+              0.1,
+            ),
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: const Offset(
+              0,
+              4,
+            ),
           ),
         ],
       ),
@@ -210,7 +499,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               width: 200, // Much bigger - increased from 170
               child: ClipRRect(
                 borderRadius: const BorderRadius.only(
-                  bottomRight: Radius.circular(24),
+                  bottomRight: Radius.circular(
+                    24,
+                  ),
                 ),
                 child: Image.asset(
                   'assets/doctor.png',
@@ -226,7 +517,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             top: 0,
             bottom: 0,
             child: Container(
-              width: MediaQuery.of(context).size.width * 0.48, // Adjusted for bigger image
+              width:
+                  MediaQuery.of(
+                    context,
+                  ).size.width *
+                  0.48, // Adjusted for bigger image
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -235,10 +530,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     children: [
                       Icon(
                         Icons.health_and_safety,
-                        color: const Color(0xFFFCA311),
+                        color: const Color(
+                          0xFFFCA311,
+                        ),
                         size: 28, // Slightly decreased from 32
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(
+                        width: 10,
+                      ),
                       const Text(
                         'Get Medical',
                         style: TextStyle(
@@ -250,9 +549,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(
+                    height: 3,
+                  ),
                   const Padding(
-                    padding: EdgeInsets.only(left: 38), // Adjusted for smaller icon
+                    padding: EdgeInsets.only(
+                      left: 38,
+                    ), // Adjusted for smaller icon
                     child: Text(
                       'Assistance',
                       style: TextStyle(
@@ -263,13 +566,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(
+                    height: 6,
+                  ),
                   const Padding(
-                    padding: EdgeInsets.only(left: 38), // Adjusted for smaller icon
+                    padding: EdgeInsets.only(
+                      left: 38,
+                    ), // Adjusted for smaller icon
                     child: Text(
                       'in Seconds',
                       style: TextStyle(
-                        color: Color(0xFFFCA311),
+                        color: Color(
+                          0xFFFCA311,
+                        ),
                         fontSize: 18, // Slightly decreased from 20
                         fontWeight: FontWeight.w500,
                         letterSpacing: 0.3,
@@ -285,32 +594,71 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildUploadSection(bool isDark) {
+  Widget _buildUploadSection(
+    bool isDark,
+  ) {
     return InkWell(
       onTap: _handleFileUpload,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(
+        20,
+      ),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(28),
+        padding: const EdgeInsets.all(
+          28,
+        ),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              isDark ? const Color(0xFF14213D).withOpacity(0.3) : Colors.white,
-              isDark ? const Color(0xFF14213D).withOpacity(0.1) : const Color(0xFFF8F9FA),
+              isDark
+                  ? const Color(
+                      0xFF14213D,
+                    ).withOpacity(
+                      0.3,
+                    )
+                  : Colors.white,
+              isDark
+                  ? const Color(
+                      0xFF14213D,
+                    ).withOpacity(
+                      0.1,
+                    )
+                  : const Color(
+                      0xFFF8F9FA,
+                    ),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(
+            20,
+          ),
           border: Border.all(
-            color: isDark ? const Color(0xFF14213D).withOpacity(0.5) : const Color(0xFFE5E5E5),
+            color: isDark
+                ? const Color(
+                    0xFF14213D,
+                  ).withOpacity(
+                    0.5,
+                  )
+                : const Color(
+                    0xFFE5E5E5,
+                  ),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: isDark ? Colors.black.withOpacity(0.3) : Colors.grey.withOpacity(0.08),
+              color: isDark
+                  ? Colors.black.withOpacity(
+                      0.3,
+                    )
+                  : Colors.grey.withOpacity(
+                      0.08,
+                    ),
               blurRadius: 15,
-              offset: const Offset(0, 5),
+              offset: const Offset(
+                0,
+                5,
+              ),
             ),
           ],
         ),
@@ -320,54 +668,100 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: const Color(0xFFFCA311).withOpacity(0.1),
+                color:
+                    const Color(
+                      0xFFFCA311,
+                    ).withOpacity(
+                      0.1,
+                    ),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.cloud_upload_outlined,
                 size: 40,
-                color: Color(0xFFFCA311),
+                color: Color(
+                  0xFFFCA311,
+                ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(
+              height: 20,
+            ),
             Text(
               'Upload Your Medical Documents',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : const Color(0xFF14213D),
+                color: isDark
+                    ? Colors.white
+                    : const Color(
+                        0xFF14213D,
+                      ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(
+              height: 8,
+            ),
             Text(
               'PDF format for a consolidated health record',
               style: TextStyle(
                 fontSize: 14,
-                color: isDark ? const Color(0xFFE5E5E5).withOpacity(0.8) : Colors.grey[600],
+                color: isDark
+                    ? const Color(
+                        0xFFE5E5E5,
+                      ).withOpacity(
+                        0.8,
+                      )
+                    : Colors.grey[600],
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(
+              height: 24,
+            ),
             AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
+              duration: const Duration(
+                milliseconds: 200,
+              ),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 40,
+                  vertical: 16,
+                ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFCA311),
-                  borderRadius: BorderRadius.circular(25),
+                  color: const Color(
+                    0xFFFCA311,
+                  ),
+                  borderRadius: BorderRadius.circular(
+                    25,
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFFCA311).withOpacity(0.3),
+                      color:
+                          const Color(
+                            0xFFFCA311,
+                          ).withOpacity(
+                            0.3,
+                          ),
                       blurRadius: 8,
-                      offset: const Offset(0, 3),
+                      offset: const Offset(
+                        0,
+                        3,
+                      ),
                     ),
                   ],
                 ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.upload_file, size: 20, color: Colors.white),
-                    SizedBox(width: 8),
+                    Icon(
+                      Icons.upload_file,
+                      size: 20,
+                      color: Colors.white,
+                    ),
+                    SizedBox(
+                      width: 8,
+                    ),
                     Text(
                       'Upload Document',
                       style: TextStyle(
@@ -386,14 +780,52 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildQuickAccessSection(bool isDark) {
+  Widget _buildQuickAccessSection(
+    bool isDark,
+  ) {
     final features = [
-      {'icon': Icons.medical_services_outlined, 'label': 'Immediate\nDiagnosis', 'color': const Color(0xFFFCA311)}, // Changed color
-      {'icon': Icons.people_outline, 'label': 'Communities', 'color': const Color(0xFFFCA311)},
-      {'icon': Icons.smart_toy_outlined, 'label': 'AI Chat', 'color': const Color(0xFFFCA311)}, // Changed color
-      {'icon': Icons.restaurant_outlined, 'label': 'Nutrition', 'color': const Color(0xFFFCA311)},
-      {'icon': Icons.summarize_outlined, 'label': 'Report\nSummary', 'color': const Color(0xFFFCA311)}, // Changed color
-      {'icon': Icons.medication_outlined, 'label': 'Medicines', 'color': const Color(0xFFFCA311)},
+      {
+        'icon': Icons.medical_services_outlined,
+        'label': 'Immediate\nDiagnosis',
+        'color': const Color(
+          0xFFFCA311,
+        ),
+      }, // Changed color
+      {
+        'icon': Icons.people_outline,
+        'label': 'Communities',
+        'color': const Color(
+          0xFFFCA311,
+        ),
+      },
+      {
+        'icon': Icons.smart_toy_outlined,
+        'label': 'AI Chat',
+        'color': const Color(
+          0xFFFCA311,
+        ),
+      }, // Changed color
+      {
+        'icon': Icons.restaurant_outlined,
+        'label': 'Nutrition',
+        'color': const Color(
+          0xFFFCA311,
+        ),
+      },
+      {
+        'icon': Icons.summarize_outlined,
+        'label': 'Report\nSummary',
+        'color': const Color(
+          0xFFFCA311,
+        ),
+      }, // Changed color
+      {
+        'icon': Icons.medication_outlined,
+        'label': 'Medicines',
+        'color': const Color(
+          0xFFFCA311,
+        ),
+      },
     ];
 
     return Column(
@@ -404,10 +836,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: isDark ? Colors.white : const Color(0xFF14213D),
+            color: isDark
+                ? Colors.white
+                : const Color(
+                    0xFF14213D,
+                  ),
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(
+          height: 20,
+        ),
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -418,16 +856,26 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             childAspectRatio: 0.85,
           ),
           itemCount: features.length,
-          itemBuilder: (context, index) {
-            final feature = features[index];
-            return _buildFeatureButton(
-              icon: feature['icon'] as IconData,
-              label: feature['label'] as String,
-              color: feature['color'] as Color,
-              isDark: isDark,
-              index: index,
-            );
-          },
+          itemBuilder:
+              (
+                context,
+                index,
+              ) {
+                final feature = features[index];
+                return _buildFeatureButton(
+                  icon:
+                      feature['icon']
+                          as IconData,
+                  label:
+                      feature['label']
+                          as String,
+                  color:
+                      feature['color']
+                          as Color,
+                  isDark: isDark,
+                  index: index,
+                );
+              },
         ),
       ],
     );
@@ -441,68 +889,119 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     required int index,
   }) {
     return TweenAnimationBuilder(
-      duration: Duration(milliseconds: 300 + (index * 100)),
-      tween: Tween<double>(begin: 0, end: 1),
-      builder: (context, double value, child) {
-        return Transform.scale(
-          scale: value,
-          child: InkWell(
-            onTap: () {},
-            borderRadius: BorderRadius.circular(16),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF14213D).withOpacity(0.3) : Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: color.withOpacity(0.2),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: isDark ? Colors.black.withOpacity(0.2) : Colors.grey.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      icon,
-                      size: 24,
-                      color: color,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    label,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: isDark ? const Color(0xFFE5E5E5) : const Color(0xFF14213D),
-                      height: 1.2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+      duration: Duration(
+        milliseconds:
+            300 +
+            (index *
+                100),
+      ),
+      tween:
+          Tween<
+            double
+          >(
+            begin: 0,
+            end: 1,
           ),
-        );
-      },
+      builder:
+          (
+            context,
+            double value,
+            child,
+          ) {
+            return Transform.scale(
+              scale: value,
+              child: InkWell(
+                onTap: () {},
+                borderRadius: BorderRadius.circular(
+                  16,
+                ),
+                child: AnimatedContainer(
+                  duration: const Duration(
+                    milliseconds: 200,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(
+                            0xFF14213D,
+                          ).withOpacity(
+                            0.3,
+                          )
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(
+                      16,
+                    ),
+                    border: Border.all(
+                      color: color.withOpacity(
+                        0.2,
+                      ),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isDark
+                            ? Colors.black.withOpacity(
+                                0.2,
+                              )
+                            : Colors.grey.withOpacity(
+                                0.1,
+                              ),
+                        blurRadius: 8,
+                        offset: const Offset(
+                          0,
+                          2,
+                        ),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(
+                            0.1,
+                          ),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          icon,
+                          size: 24,
+                          color: color,
+                        ),
+                      ),
+                      const SizedBox(
+                        height: 12,
+                      ),
+                      Text(
+                        label,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: isDark
+                              ? const Color(
+                                  0xFFE5E5E5,
+                                )
+                              : const Color(
+                                  0xFF14213D,
+                                ),
+                          height: 1.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
     );
   }
 
-  Widget _buildFeaturesSection(bool isDark) {
+  Widget _buildFeaturesSection(
+    bool isDark,
+  ) {
     final offers = [
       {
         'title': '24/7 AI Support',
@@ -529,95 +1028,164 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: isDark ? Colors.white : const Color(0xFF14213D),
+            color: isDark
+                ? Colors.white
+                : const Color(
+                    0xFF14213D,
+                  ),
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(
+          height: 20,
+        ),
         SizedBox(
           height: 160,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             itemCount: offers.length,
-            itemBuilder: (context, index) {
-              final offer = offers[index];
-              return Container(
-                width: 280,
-                margin: EdgeInsets.only(
-                  right: 16,
-                  left: index == 0 ? 4 : 0,
-                ),
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      const Color(0xFFFCA311).withOpacity(0.8),
-                      const Color(0xFFFCA311).withOpacity(0.6),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFFCA311).withOpacity(0.3),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
+            itemBuilder:
+                (
+                  context,
+                  index,
+                ) {
+                  final offer = offers[index];
+                  return Container(
+                    width: 280,
+                    margin: EdgeInsets.only(
+                      right: 16,
+                      left:
+                          index ==
+                              0
+                          ? 4
+                          : 0,
                     ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        offer['icon'] as IconData,
-                        color: Colors.white,
-                        size: 28,
-                      ),
+                    padding: const EdgeInsets.all(
+                      20,
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      offer['title'] as String,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(
+                            0xFFFCA311,
+                          ).withOpacity(
+                            0.8,
+                          ),
+                          const Color(
+                            0xFFFCA311,
+                          ).withOpacity(
+                            0.6,
+                          ),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      offer['subtitle'] as String,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(
+                        16,
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color:
+                              const Color(
+                                0xFFFCA311,
+                              ).withOpacity(
+                                0.3,
+                              ),
+                          blurRadius: 10,
+                          offset: const Offset(
+                            0,
+                            4,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              );
-            },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(
+                              0.2,
+                            ),
+                            borderRadius: BorderRadius.circular(
+                              12,
+                            ),
+                          ),
+                          child: Icon(
+                            offer['icon']
+                                as IconData,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 16,
+                        ),
+                        Text(
+                          offer['title']
+                              as String,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 8,
+                        ),
+                        Text(
+                          offer['subtitle']
+                              as String,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.white.withOpacity(
+                              0.9,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
           ),
         ),
       ],
     );
   }
 
-  Widget _buildAssuranceSection(bool isDark) {
+  Widget _buildAssuranceSection(
+    bool isDark,
+  ) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(
+        24,
+      ),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF14213D).withOpacity(0.2) : const Color(0xFFF8F9FA),
-        borderRadius: BorderRadius.circular(16),
+        color: isDark
+            ? const Color(
+                0xFF14213D,
+              ).withOpacity(
+                0.2,
+              )
+            : const Color(
+                0xFFF8F9FA,
+              ),
+        borderRadius: BorderRadius.circular(
+          16,
+        ),
         border: Border.all(
-          color: isDark ? const Color(0xFF14213D).withOpacity(0.3) : const Color(0xFFE5E5E5),
+          color: isDark
+              ? const Color(
+                  0xFF14213D,
+                ).withOpacity(
+                  0.3,
+                )
+              : const Color(
+                  0xFFE5E5E5,
+                ),
         ),
       ),
       child: Column(
@@ -626,31 +1194,54 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: const Color(0xFFFCA311).withOpacity(0.1),
+              color:
+                  const Color(
+                    0xFFFCA311,
+                  ).withOpacity(
+                    0.1,
+                  ),
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.favorite,
-              color: Color(0xFFFCA311),
+              color: Color(
+                0xFFFCA311,
+              ),
               size: 30,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(
+            height: 16,
+          ),
           Text(
             'No more medical worries',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: isDark ? const Color(0xFFFCA311) : const Color(0xFF14213D), // Changed color for dark mode
+              color: isDark
+                  ? const Color(
+                      0xFFFCA311,
+                    )
+                  : const Color(
+                      0xFF14213D,
+                    ), // Changed color for dark mode
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(
+            height: 12,
+          ),
           Text(
             'We simplify your health journey, connecting you with top-tier care and answers you can trust, all at your fingertips. Focus on living, we\'ll handle the rest.',
             style: TextStyle(
               fontSize: 16,
               height: 1.5,
-              color: isDark ? const Color(0xFFE5E5E5).withOpacity(0.8) : Colors.grey[600],
+              color: isDark
+                  ? const Color(
+                      0xFFE5E5E5,
+                    ).withOpacity(
+                      0.8,
+                    )
+                  : Colors.grey[600],
             ),
             textAlign: TextAlign.center,
           ),
@@ -659,9 +1250,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildFooter(bool isDark) {
+  Widget _buildFooter(
+    bool isDark,
+  ) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      padding: const EdgeInsets.symmetric(
+        vertical: 16,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -669,18 +1264,32 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             'Designed with ',
             style: TextStyle(
               fontSize: 14,
-              color: isDark ? const Color(0xFFE5E5E5).withOpacity(0.6) : Colors.grey[500],
+              color: isDark
+                  ? const Color(
+                      0xFFE5E5E5,
+                    ).withOpacity(
+                      0.6,
+                    )
+                  : Colors.grey[500],
             ),
           ),
           const Text(
             '❤️',
-            style: TextStyle(fontSize: 16),
+            style: TextStyle(
+              fontSize: 16,
+            ),
           ),
           Text(
             ' for your well-being',
             style: TextStyle(
               fontSize: 14,
-              color: isDark ? const Color(0xFFE5E5E5).withOpacity(0.6) : Colors.grey[500],
+              color: isDark
+                  ? const Color(
+                      0xFFE5E5E5,
+                    ).withOpacity(
+                      0.6,
+                    )
+                  : Colors.grey[500],
             ),
           ),
         ],
