@@ -22,7 +22,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
 
-  // Store the email for later use in the reset request
   String _storedEmail = '';
 
   @override
@@ -33,15 +32,16 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     _confirmPasswordController.dispose();
     super.dispose();
   }
-  Future<void> _resend() async{
-    const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/authentication/resendotp';
+
+  Future<void> _resend() async {
+    const String apiUrl =
+        'https://codenebula-internal-round-25.onrender.com/api/authentication/resendotp';
 
     final Map<String, dynamic> requestBody = {
       'email': _emailController.text.trim(),
     };
 
     try {
-      // Make POST request
       final response = await http.post(
         Uri.parse(apiUrl),
         headers: <String, String>{
@@ -51,60 +51,42 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        // Success
-        final responseData = jsonDecode(response.body);
-
-        // Show success message
         AwesomeSnackbar.success(
-            context,
-            "OTP resent Successfully",
-            "Please check your email for the verification code"
+          context,
+          "OTP resent Successfully",
+          "Please check your email for the verification code",
         );
-
         setState(() {
           _isLoading = false;
           _otpSent = true;
         });
       } else {
-        // Error - show appropriate message
         final errorData = jsonDecode(response.body);
-        print(errorData);
-
-        // Show error message based on API response
-        String errorMessage = "Failed to send OTP";
-        if (errorData.containsKey('message')) {
-          errorMessage = errorData['message'];
-        } else if (errorData.containsKey('error')) {
-          errorMessage = errorData['error'];
-        }
-
+        String errorMessage = errorData['message'] ?? errorData['error'] ?? "Failed to send OTP";
         AwesomeSnackbar.error(context, "Failed to send OTP", errorMessage);
         setState(() => _isLoading = false);
       }
     } catch (e) {
-      AwesomeSnackbar.error(context, "Network Error", "Please check your internet connection");
+      AwesomeSnackbar.error(
+          context, "Network Error", "Please check your internet connection");
       setState(() => _isLoading = false);
     }
-
-
   }
+
   Future<void> _sendOtp() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/authentication/password-reset-request/';
+      const String apiUrl =
+          'https://codenebula-internal-round-25.onrender.com/api/authentication/password-reset-request/';
 
       final Map<String, dynamic> requestBody = {
         'email': _emailController.text.trim(),
       };
 
-      // Store the email for the reset request
       _storedEmail = _emailController.text.trim();
 
-      print(_storedEmail);
-
       try {
-        // Make POST request
         final response = await http.post(
           Uri.parse(apiUrl),
           headers: <String, String>{
@@ -114,38 +96,22 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         );
 
         if (response.statusCode == 200 || response.statusCode == 201) {
-          // Success
-          final responseData = jsonDecode(response.body);
-
-          // Show success message
           AwesomeSnackbar.success(
-              context,
-              "OTP sent Successfully",
-              "Please check your email for the verification code"
-          );
-
+              context, "OTP sent Successfully", "Please check your email");
           setState(() {
             _isLoading = false;
             _otpSent = true;
           });
         } else {
-          // Error - show appropriate message
           final errorData = jsonDecode(response.body);
-          print(errorData);
-
-          // Show error message based on API response
-          String errorMessage = "Failed to send OTP";
-          if (errorData.containsKey('message')) {
-            errorMessage = errorData['message'];
-          } else if (errorData.containsKey('error')) {
-            errorMessage = errorData['error'];
-          }
-
+          String errorMessage =
+              errorData['message'] ?? errorData['error'] ?? "Failed to send OTP";
           AwesomeSnackbar.error(context, "Failed to send OTP", errorMessage);
           setState(() => _isLoading = false);
         }
       } catch (e) {
-        AwesomeSnackbar.error(context, "Network Error", "Please check your internet connection");
+        AwesomeSnackbar.error(
+            context, "Network Error", "Please check your internet connection");
         setState(() => _isLoading = false);
       }
     }
@@ -155,17 +121,16 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/authentication/password-reset/';
+      const String apiUrl =
+          'https://codenebula-internal-round-25.onrender.com/api/authentication/password-reset/';
 
       final Map<String, dynamic> requestBody = {
         'email': _storedEmail,
         'otp': _otpController.text,
         'new_password': _newPasswordController.text
       };
-      print('$_storedEmail, ${_otpController.text}, ${_newPasswordController.text}');
 
       try {
-        // Make POST request to reset password with OTP and new password
         final response = await http.post(
           Uri.parse(apiUrl),
           headers: <String, String>{
@@ -175,36 +140,21 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         );
 
         if (response.statusCode == 200 || response.statusCode == 201) {
-          // Success
-          final responseData = jsonDecode(response.body);
-
-          // Show success message
-          AwesomeSnackbar.success(
-              context,
-              "Password Reset Successful",
-              "You can now login with your new password"
-          );
-
-          // Navigate back to login
+          AwesomeSnackbar.success(context, "Password Reset Successful",
+              "You can now login with your new password");
           Navigator.pop(context);
         } else {
-          // Error - show appropriate message
           final errorData = jsonDecode(response.body);
-          print(errorData);
-
-          // Show error message based on API response
-          String errorMessage = "Password reset failed";
-          if (errorData.containsKey('message')) {
-            errorMessage = errorData['message'];
-          } else if (errorData.containsKey('error')) {
-            errorMessage = errorData['error'];
-          }
-
-          AwesomeSnackbar.error(context, "Failed to reset password", errorMessage);
+          String errorMessage = errorData['message'] ??
+              errorData['error'] ??
+              "Password reset failed";
+          AwesomeSnackbar.error(
+              context, "Failed to reset password", errorMessage);
           setState(() => _isLoading = false);
         }
       } catch (e) {
-        AwesomeSnackbar.error(context, "Network Error", "Please check your internet connection");
+        AwesomeSnackbar.error(
+            context, "Network Error", "Please check your internet connection");
         setState(() => _isLoading = false);
       }
     }
@@ -213,10 +163,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xffe5e5e5),
       appBar: AppBar(
-        title: const Text('Reset Password'),
-        backgroundColor: Colors.blue.shade700,
-        foregroundColor: Colors.white,
+        title: const Text("Forgot Password"),
+        backgroundColor: const Color(0xfffca311), // Yellow primary
+        foregroundColor: const Color(0xff14213d), // Blue text
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -227,34 +178,22 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 20),
-                // Header
+                const SizedBox(height: 24),
                 _buildHeader(),
                 const SizedBox(height: 32),
-
-                // Email Input (always visible)
                 _buildEmailField(),
                 const SizedBox(height: 20),
-
-                // Send OTP Button (only before OTP is sent)
                 if (!_otpSent) _buildSendOtpButton(),
-
-                // OTP Input (visible after OTP is sent)
-                if (_otpSent) _buildOtpField(),
-                if (_otpSent) const SizedBox(height: 20),
-
-                // New Password Fields (visible after OTP is sent)
-                if (_otpSent) _buildNewPasswordField(),
-                if (_otpSent) const SizedBox(height: 20),
-                if (_otpSent) _buildConfirmPasswordField(),
-                if (_otpSent) const SizedBox(height: 20),
-
-                // Reset Password Button (visible after OTP is sent)
-                if (_otpSent) _buildResetPasswordButton(),
-
+                if (_otpSent) ...[
+                  _buildOtpField(),
+                  const SizedBox(height: 20),
+                  _buildNewPasswordField(),
+                  const SizedBox(height: 20),
+                  _buildConfirmPasswordField(),
+                  const SizedBox(height: 20),
+                  _buildResetPasswordButton(),
+                ],
                 const SizedBox(height: 24),
-
-                // Back to Login
                 _buildBackToLogin(),
               ],
             ),
@@ -268,12 +207,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'Reset Password',
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
-            color: Colors.blue.shade800,
+            color: Color(0xff14213d), // blue headline
           ),
         ),
         const SizedBox(height: 8),
@@ -281,9 +220,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           _otpSent
               ? 'Enter the OTP and your new password'
               : 'Enter your email to receive OTP',
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 16,
-            color: Colors.grey.shade600,
+            color: Colors.black54,
           ),
         ),
       ],
@@ -294,26 +233,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     return TextFormField(
       controller: _emailController,
       keyboardType: TextInputType.emailAddress,
-      enabled: !_otpSent, // Disable after OTP is sent
-      decoration: InputDecoration(
-        labelText: 'Email Address',
-        prefixIcon: Icon(Icons.email_outlined, color: Colors.blue.shade600),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.blue.shade200),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.blue.shade600, width: 2),
-        ),
-      ),
+      enabled: !_otpSent,
+      decoration: _inputDecoration("Email Address", Icons.email_outlined),
       validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Please enter your email';
-        }
-        if (!value.contains('@')) {
-          return 'Please enter a valid email';
-        }
+        if (value == null || value.isEmpty) return "Please enter your email";
+        if (!value.contains('@')) return "Please enter a valid email";
         return null;
       },
     );
@@ -323,37 +247,18 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     return TextFormField(
       controller: _otpController,
       keyboardType: TextInputType.number,
-      decoration: InputDecoration(
-        labelText: 'OTP Code',
-        prefixIcon: Icon(Icons.lock_outline, color: Colors.blue.shade600),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.blue.shade200),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.blue.shade600, width: 2),
-        ),
-        suffixIcon: _otpSent
-            ? TextButton(
-          onPressed: () {
-            // Resend OTP functionality
-            _resend();
-          },
-          child: Text(
-            'Resend',
-            style: TextStyle(color: Colors.blue.shade600),
+      decoration: _inputDecoration("OTP Code", Icons.lock_outline).copyWith(
+        suffixIcon: TextButton(
+          onPressed: _resend,
+          child: const Text(
+            "Resend",
+            style: TextStyle(color: Color(0xff14213d)), // Blue accent
           ),
-        )
-            : null,
+        ),
       ),
       validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Please enter OTP';
-        }
-        if (value.length != 6) {
-          return 'OTP must be 6 digits';
-        }
+        if (value == null || value.isEmpty) return "Please enter OTP";
+        if (value.length != 6) return "OTP must be 6 digits";
         return null;
       },
     );
@@ -363,34 +268,18 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     return TextFormField(
       controller: _newPasswordController,
       obscureText: !_isPasswordVisible,
-      decoration: InputDecoration(
-        labelText: 'New Password',
-        prefixIcon: Icon(Icons.lock_outline, color: Colors.blue.shade600),
+      decoration: _inputDecoration("New Password", Icons.lock_outline).copyWith(
         suffixIcon: IconButton(
           icon: Icon(
-            _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-            color: Colors.blue.shade600,
-          ),
-          onPressed: () {
-            setState(() => _isPasswordVisible = !_isPasswordVisible);
-          },
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.blue.shade200),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.blue.shade600, width: 2),
+              _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+              color: const Color(0xff14213d)), // Blue icon
+          onPressed: () =>
+              setState(() => _isPasswordVisible = !_isPasswordVisible),
         ),
       ),
       validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Please enter new password';
-        }
-        if (value.length < 6) {
-          return 'Password must be at least 6 characters';
-        }
+        if (value == null || value.isEmpty) return "Please enter new password";
+        if (value.length < 6) return "Password must be at least 6 characters";
         return null;
       },
     );
@@ -400,33 +289,22 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     return TextFormField(
       controller: _confirmPasswordController,
       obscureText: !_isConfirmPasswordVisible,
-      decoration: InputDecoration(
-        labelText: 'Confirm Password',
-        prefixIcon: Icon(Icons.lock_outline, color: Colors.blue.shade600),
+      decoration:
+          _inputDecoration("Confirm Password", Icons.lock_outline).copyWith(
         suffixIcon: IconButton(
           icon: Icon(
-            _isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
-            color: Colors.blue.shade600,
-          ),
-          onPressed: () {
-            setState(() => _isConfirmPasswordVisible = !_isConfirmPasswordVisible);
-          },
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.blue.shade200),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.blue.shade600, width: 2),
+              _isConfirmPasswordVisible
+                  ? Icons.visibility
+                  : Icons.visibility_off,
+              color: const Color(0xff14213d)), // Blue icon
+          onPressed: () => setState(
+              () => _isConfirmPasswordVisible = !_isConfirmPasswordVisible),
         ),
       ),
       validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Please confirm your password';
-        }
+        if (value == null || value.isEmpty) return "Please confirm password";
         if (value != _newPasswordController.text) {
-          return 'Passwords do not match';
+          return "Passwords do not match";
         }
         return null;
       },
@@ -434,86 +312,71 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   }
 
   Widget _buildSendOtpButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 56,
-      child: ElevatedButton(
-        onPressed: _isLoading ? null : _sendOtp,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue.shade700,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 2,
-        ),
-        child: _isLoading
-            ? const SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation(Colors.white),
-          ),
-        )
-            : const Text(
-          'Send OTP',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
+    return _styledButton("Send OTP", const Color(0xfffca311), _sendOtp);
   }
 
   Widget _buildResetPasswordButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 56,
-      child: ElevatedButton(
-        onPressed: _isLoading ? null : _resetPassword,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.green.shade600,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 2,
-        ),
-        child: _isLoading
-            ? const SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation(Colors.white),
-          ),
-        )
-            : const Text(
-          'Reset Password',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
+    return _styledButton("Reset Password", const Color(0xfffca311), _resetPassword);
   }
 
   Widget _buildBackToLogin() {
     return Center(
       child: TextButton(
-        onPressed: () {
-          Navigator.pop(context);
-        },
-        child: Text(
-          'Back to Login',
+        onPressed: () => Navigator.pop(context),
+        child: const Text(
+          "Back to Login",
           style: TextStyle(
-            color: Colors.blue.shade700,
+            color: Color(0xff14213d), // Blue accent
             fontWeight: FontWeight.bold,
           ),
         ),
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, color: const Color(0xff14213d)), // Blue accent
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xff14213d)), // Blue border
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xfffca311), width: 2), // Yellow focus
+      ),
+    );
+  }
+
+  Widget _styledButton(String text, Color bgColor, VoidCallback onPressed) {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: bgColor, // Yellow primary
+          foregroundColor: const Color(0xff14213d), // Blue text
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 3,
+        ),
+        child: _isLoading
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation(Color(0xff14213d)), // Blue spinner
+                ),
+              )
+            : Text(
+                text,
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
       ),
     );
   }

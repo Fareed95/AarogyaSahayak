@@ -18,7 +18,7 @@ class _MedicalInfoState extends State<MedicalInfo> {
   Map<String, dynamic>? _medicalData;
   bool _isLoading = true;
   String _errorMessage = '';
-
+  
   @override
   void initState() {
     super.initState();
