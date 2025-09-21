@@ -514,7 +514,7 @@ class _LayoutState extends State<Layout> {
       const HomeScreen(), // Widget
       const CommunityApiService(),
       const Nutrition(), // Widget
-      const profile_screen(), // Widget (PascalCase)
+      const ProfileScreen(), // Widget (PascalCase)
     ];
 
     return Scaffold(
@@ -594,3 +594,4 @@ class _LayoutState extends State<Layout> {
     );
   }
 }
+
