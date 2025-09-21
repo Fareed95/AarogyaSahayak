@@ -31,51 +31,42 @@ class _LoginPageState extends State<login_screen> {
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
       try {
-        // API endpoint
-        const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/authentication/login';
+        const String apiUrl =
+            'https://codenebula-internal-round-25.onrender.com/api/authentication/login';
 
-        // Prepare the request body
         final Map<String, dynamic> requestBody = {
           'email': _emailController.text.trim(),
           'password': _passwordController.text,
         };
 
-        // Make POST request
         final response = await http.post(
           Uri.parse(apiUrl),
           headers: <String, String>{
             'Content-Type': 'application/json; charset=UTF-8',
-
           },
           body: jsonEncode(requestBody),
         );
 
-        // Handle response
         if (response.statusCode == 200 || response.statusCode == 201) {
-          // Success
           final responseData = jsonDecode(response.body);
-          
-            await SecureStorageService().storeJwtToken(responseData['jwt']);
-            print("token stored successfully");
-            print(responseData['jwt']);
-          // Show success message
+
+          await SecureStorageService().storeJwtToken(responseData['jwt']);
+          print("token stored successfully");
+          print(responseData['jwt']);
+
           AwesomeSnackbar.success(
-              context,
-              "Registration Successful",
-              "Please check your email for the verification code"
-          );
-            Info().setLoggedIn(true);
+              context, "Login Successful", "Welcome back to Aarogya Sahayak");
+
+          Info().setLoggedIn(true);
           Navigator.pop(context);
 
           _emailController.clear();
           _passwordController.clear();
         } else {
-          // Error - show appropriate message
           final errorData = jsonDecode(response.body);
           print(errorData);
 
-          // Show error message based on API response
-          String errorMessage = "Registration failed";
+          String errorMessage = "Login failed";
           if (errorData.containsKey('message')) {
             errorMessage = errorData['message'];
           } else if (errorData.containsKey('error')) {
@@ -85,13 +76,9 @@ class _LoginPageState extends State<login_screen> {
           AwesomeSnackbar.error(context, "Login Failed", errorMessage);
         }
       } catch (error) {
-        // Network or other errors
         print(error);
         AwesomeSnackbar.error(
-            context,
-            "Network Error",
-            "Please check your internet connection and try again"
-        );
+            context, "Network Error", "Please check your internet connection");
       }
     }
   }
@@ -99,28 +86,23 @@ class _LoginPageState extends State<login_screen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xffe5e5e5),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             children: [
-              const SizedBox(height: 80),
-              // App Logo and Title
+              const SizedBox(height: 60),
               _buildHeader(),
-              const SizedBox(height: 48),
-              // Login Form
+              const SizedBox(height: 40),
               _buildLoginForm(),
-              const SizedBox(height: 32),
-              // Login Button
+              const SizedBox(height: 28),
               _buildLoginButton(),
               const SizedBox(height: 24),
-              // Divider
               _buildDivider(),
               const SizedBox(height: 24),
-              // Social Login Options
               _buildSocialLogin(),
-              const SizedBox(height: 32),
-              // Sign Up Link
+              const SizedBox(height: 28),
               _buildSignUpLink(),
             ],
           ),
@@ -132,28 +114,27 @@ class _LoginPageState extends State<login_screen> {
   Widget _buildHeader() {
     return Column(
       children: [
-        Container(
-          width: 100,
-          height: 100,
-
-
+        Image.asset(
+          "assets/logo.png",
+          height: 140,
+          fit: BoxFit.contain,
         ),
         const SizedBox(height: 24),
         Text(
-          'hackathon',
-          style: TextStyle(
-            fontSize: 32,
+          'Aarogya Sahayak',
+          style: const TextStyle(
+            fontSize: 28,
             fontWeight: FontWeight.bold,
-            color: Colors.blue.shade800,
+            color: Color(0xff14213d),
             letterSpacing: 1.2,
           ),
         ),
         const SizedBox(height: 8),
         Text(
-          'Sign in to continue',
+          'Welcome back! Please log in to continue',
           style: TextStyle(
             fontSize: 16,
-            color: Colors.grey.shade600,
+            color: Colors.grey.shade700,
           ),
         ),
       ],
@@ -165,22 +146,11 @@ class _LoginPageState extends State<login_screen> {
       key: _formKey,
       child: Column(
         children: [
-          // Email Field
+          // Email
           TextFormField(
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
-            decoration: InputDecoration(
-              labelText: 'Email Address',
-              prefixIcon: Icon(Icons.email_outlined, color: Colors.blue.shade600),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.blue.shade200),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.blue.shade600, width: 2),
-              ),
-            ),
+            decoration: _inputDecoration("Email Address", Icons.email_outlined),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter your email';
@@ -191,30 +161,23 @@ class _LoginPageState extends State<login_screen> {
               return null;
             },
           ),
-          const SizedBox(height: 20),
-          // Password Field
+          const SizedBox(height: 18),
+
+          // Password
           TextFormField(
             controller: _passwordController,
             obscureText: !_isPasswordVisible,
-            decoration: InputDecoration(
-              labelText: 'Password',
-              prefixIcon: Icon(Icons.lock_outline, color: Colors.blue.shade600),
+            decoration: _inputDecoration("Password", Icons.lock_outline).copyWith(
               suffixIcon: IconButton(
                 icon: Icon(
-                  _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                  color: Colors.blue.shade600,
+                  _isPasswordVisible
+                      ? Icons.visibility
+                      : Icons.visibility_off,
+                  color: const Color(0xff14213d),
                 ),
                 onPressed: () {
                   setState(() => _isPasswordVisible = !_isPasswordVisible);
                 },
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.blue.shade200),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.blue.shade600, width: 2),
               ),
             ),
             validator: (value) {
@@ -227,17 +190,21 @@ class _LoginPageState extends State<login_screen> {
               return null;
             },
           ),
-          const SizedBox(height: 16),
-          // Forgot Password
+
+          const SizedBox(height: 12),
+
+          // Forgot password
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => ForgotPasswordPage()));},
-              child: Text(
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => ForgotPasswordPage()));
+              },
+              child: const Text(
                 'Forgot Password?',
                 style: TextStyle(
-                  color: Colors.blue.shade600,
+                  color: Color(0xff14213d),
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -248,37 +215,50 @@ class _LoginPageState extends State<login_screen> {
     );
   }
 
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      hintText: label,
+      filled: true,
+      fillColor: Colors.white,
+      prefixIcon: Icon(icon, color: const Color(0xff14213d)),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xffe5e5e5)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xfffca311), width: 2),
+      ),
+    );
+  }
+
   Widget _buildLoginButton() {
     return SizedBox(
       width: double.infinity,
-      height: 56,
+      height: 52,
       child: ElevatedButton(
         onPressed: _isLoading ? null : _login,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue.shade700,
+          backgroundColor: const Color(0xfffca311),
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
           elevation: 2,
-          padding: const EdgeInsets.symmetric(vertical: 16),
         ),
         child: _isLoading
             ? const SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation(Colors.white),
-          ),
-        )
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation(Colors.white),
+                ),
+              )
             : const Text(
-          'Sign In',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+                'Sign In',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
       ),
     );
   }
@@ -286,35 +266,34 @@ class _LoginPageState extends State<login_screen> {
   Widget _buildDivider() {
     return Row(
       children: [
-        Expanded(
-          child: Divider(color: Colors.grey.shade300),
-        ),
+        Expanded(child: Divider(color: Colors.grey.shade400)),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Text(
-            'Or continue with',
-            style: TextStyle(
-              color: Colors.grey.shade600,
-            ),
+            "Or",
+            style: TextStyle(color: Colors.grey.shade600),
           ),
         ),
-        Expanded(
-          child: Divider(color: Colors.grey.shade300),
-        ),
+        Expanded(child: Divider(color: Colors.grey.shade400)),
       ],
     );
   }
 
   Widget _buildSocialLogin() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
       children: [
+        Text(
+          "Sign in with Google",
+          style: TextStyle(color: Colors.grey.shade700),
+        ),
+        const SizedBox(height: 12),
         _buildSocialButton(
           icon: Icons.g_mobiledata,
-          onPressed: () {},
           color: Colors.red.shade400,
+          onPressed: () {
+            // keep Google login logic here later
+          },
         ),
-
       ],
     );
   }
@@ -325,17 +304,17 @@ class _LoginPageState extends State<login_screen> {
     required Color color,
   }) {
     return Container(
-      width: 60,
-      height: 60,
+      width: 56,
+      height: 56,
       decoration: BoxDecoration(
         color: Colors.white,
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Colors.grey.shade300),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.shade200,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -352,16 +331,17 @@ class _LoginPageState extends State<login_screen> {
       children: [
         Text(
           "Don't have an account? ",
-          style: TextStyle(color: Colors.grey.shade600),
+          style: TextStyle(color: Colors.grey.shade700),
         ),
         GestureDetector(
           onTap: () {
-           Navigator.push(context, MaterialPageRoute(builder: (context) => SignupPage(),));
+            Navigator.push(
+                context, MaterialPageRoute(builder: (context) => SignupPage()));
           },
-          child: Text(
-            'Sign Up',
+          child: const Text(
+            "Sign Up",
             style: TextStyle(
-              color: Colors.blue.shade700,
+              color: Color(0xff14213d),
               fontWeight: FontWeight.bold,
             ),
           ),

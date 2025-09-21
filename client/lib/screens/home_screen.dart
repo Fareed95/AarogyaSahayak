@@ -14,14 +14,56 @@ class HomeScreen extends StatefulWidget {
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   bool _isDoctor = false;
   bool _isMedical = false;
+  late AnimationController _fadeController;
+  late AnimationController _slideController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
     _getUserData();
+    _initAnimations();
+  }
+
+  void _initAnimations() {
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeInOut,
+    ));
+    
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.5),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _slideController,
+      curve: Curves.easeOutCubic,
+    ));
+    
+    _fadeController.forward();
+    _slideController.forward();
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    _slideController.dispose();
+    super.dispose();
   }
 
   Future<void> _getUserData() async {
@@ -80,121 +122,261 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Welcome section
-            _buildWelcomeSection(isDark),
-            const SizedBox(height: 32),
+      backgroundColor: isDark ? const Color(0xFF000000) : const Color(0xFFFAFAFA),
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            children: [
+              // Aesthetic Banner
+              _buildTopBanner(isDark),
+              
+              SlideTransition(
+                position: _slideAnimation,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 24),
+                      
+                      // Upload Section
+                      _buildUploadSection(isDark),
+                      const SizedBox(height: 32),
 
-            // File upload section
-            _buildUploadSection(isDark),
-            const SizedBox(height: 40),
+                      // Quick Access Section
+                      _buildQuickAccessSection(isDark),
+                      const SizedBox(height: 32),
 
-            // Quick access section
-            _buildQuickAccessSection(isDark),
-          ],
+                      // Features & Offers Section
+                      _buildFeaturesSection(isDark),
+                      const SizedBox(height: 32),
+
+                      // Assurance Section
+                      _buildAssuranceSection(isDark),
+                      const SizedBox(height: 32),
+
+                      // Footer
+                      _buildFooter(isDark),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildWelcomeSection(bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "Welcome to HealthHub",
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: isDark ? Colors.white : const Color(0xFF153D8A),
-          ),
+  Widget _buildTopBanner(bool isDark) {
+    return Container(
+      width: double.infinity,
+      height: 280, // Increased height for bigger image
+      margin: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            isDark ? const Color(0xFF14213D) : const Color(0xFF14213D).withOpacity(0.9),
+            isDark ? const Color(0xFF14213D).withOpacity(0.8) : const Color(0xFF14213D).withOpacity(0.7),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        const SizedBox(height: 12),
-        Text(
-          "Upload your medical reports in PDF format and get instant insights about your health. Our AI-powered system will analyze your reports and provide you with easy-to-understand information.",
-          style: TextStyle(
-            fontSize: 16,
-            height: 1.5,
-            color: isDark ? Colors.grey[300] : Colors.grey[700],
-          ),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
         ),
-      ],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Doctor Image - Made much bigger while keeping alignment
+          Positioned(
+            right: 5, // Adjusted positioning for much bigger image
+            bottom: 0,
+            child: Container(
+              height: 260, // Much bigger - increased from 220
+              width: 200, // Much bigger - increased from 170
+              child: ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  bottomRight: Radius.circular(24),
+                ),
+                child: Image.asset(
+                  'assets/doctor.png',
+                  fit: BoxFit.contain,
+                  alignment: Alignment.bottomCenter,
+                ),
+              ),
+            ),
+          ),
+          // Text Content - Slightly decreased size but well balanced with bigger image
+          Positioned(
+            left: 28,
+            top: 0,
+            bottom: 0,
+            child: Container(
+              width: MediaQuery.of(context).size.width * 0.48, // Adjusted for bigger image
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.health_and_safety,
+                        color: const Color(0xFFFCA311),
+                        size: 28, // Slightly decreased from 32
+                      ),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'Get Medical',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 23, // Slightly decreased from 26
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 38), // Adjusted for smaller icon
+                    child: Text(
+                      'Assistance',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 23, // Slightly decreased from 26
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 38), // Adjusted for smaller icon
+                    child: Text(
+                      'in Seconds',
+                      style: TextStyle(
+                        color: Color(0xFFFCA311),
+                        fontSize: 18, // Slightly decreased from 20
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildUploadSection(bool isDark) {
-    return Center(
+    return InkWell(
+      onTap: _handleFileUpload,
+      borderRadius: BorderRadius.circular(20),
       child: Container(
         width: double.infinity,
-        constraints: const BoxConstraints(maxWidth: 500),
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(28),
         decoration: BoxDecoration(
-          color: isDark ? Colors.grey[900] : Colors.blueGrey[50],
-          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            colors: [
+              isDark ? const Color(0xFF14213D).withOpacity(0.3) : Colors.white,
+              isDark ? const Color(0xFF14213D).withOpacity(0.1) : const Color(0xFFF8F9FA),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isDark ? Colors.blueGrey[700]! : Colors.blueGrey[100]!,
-            width: 2,
+            color: isDark ? const Color(0xFF14213D).withOpacity(0.5) : const Color(0xFFE5E5E5),
+            width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: isDark ? Colors.black54 : Colors.grey.withOpacity(0.2),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: isDark ? Colors.black.withOpacity(0.3) : Colors.grey.withOpacity(0.08),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
             ),
           ],
         ),
         child: Column(
           children: [
-            Icon(
-              Icons.medical_services,
-              size: 64,
-              color: isDark ? Colors.blueGrey[300] : const Color(0xFF153D8A),
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFCA311).withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.cloud_upload_outlined,
+                size: 40,
+                color: Color(0xFFFCA311),
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Text(
-              "Upload Your Medical Reports",
+              'Upload Your Medical Documents',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : const Color(0xFF153D8A),
+                color: isDark ? Colors.white : const Color(0xFF14213D),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
-              "Supported format: PDF (Max size: 10MB)",
+              'PDF format for a consolidated health record',
               style: TextStyle(
                 fontSize: 14,
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
+                color: isDark ? const Color(0xFFE5E5E5).withOpacity(0.8) : Colors.grey[600],
               ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _handleFileUpload,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF153D8A),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFCA311),
+                  borderRadius: BorderRadius.circular(25),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFCA311).withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
-                elevation: 3,
-              ),
-              child: const Text("Select PDF File"),
-            ),
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: () {},
-              child: Text(
-                "How to get your medical reports?",
-                style: TextStyle(
-                  color: isDark ? Colors.blueGrey[300] : const Color(0xFF153D8A),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.upload_file, size: 20, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text(
+                      'Upload Document',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -205,63 +387,47 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildQuickAccessSection(bool isDark) {
+    final features = [
+      {'icon': Icons.medical_services_outlined, 'label': 'Immediate\nDiagnosis', 'color': const Color(0xFFFCA311)}, // Changed color
+      {'icon': Icons.people_outline, 'label': 'Communities', 'color': const Color(0xFFFCA311)},
+      {'icon': Icons.smart_toy_outlined, 'label': 'AI Chat', 'color': const Color(0xFFFCA311)}, // Changed color
+      {'icon': Icons.restaurant_outlined, 'label': 'Nutrition', 'color': const Color(0xFFFCA311)},
+      {'icon': Icons.summarize_outlined, 'label': 'Report\nSummary', 'color': const Color(0xFFFCA311)}, // Changed color
+      {'icon': Icons.medication_outlined, 'label': 'Medicines', 'color': const Color(0xFFFCA311)},
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Quick Access",
+          'Quick Access',
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: isDark ? Colors.white : const Color(0xFF153D8A),
+            color: isDark ? Colors.white : const Color(0xFF14213D),
           ),
         ),
         const SizedBox(height: 20),
-        GridView.count(
+        GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 3,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 0.9,
-          children: [
-            _buildFeatureButton(
-              icon: Icons.medical_services,
-              label: "Immediate Diagnosis",
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 0.85,
+          ),
+          itemCount: features.length,
+          itemBuilder: (context, index) {
+            final feature = features[index];
+            return _buildFeatureButton(
+              icon: feature['icon'] as IconData,
+              label: feature['label'] as String,
+              color: feature['color'] as Color,
               isDark: isDark,
-              onTap: () {},
-            ),
-            _buildFeatureButton(
-              icon: Icons.people,
-              label: "Communities",
-              isDark: isDark,
-              onTap: () {},
-            ),
-            _buildFeatureButton(
-              icon: Icons.chat,
-              label: "AI Chat",
-              isDark: isDark,
-              onTap: () {},
-            ),
-            _buildFeatureButton(
-              icon: Icons.restaurant,
-              label: "Nutrition",
-              isDark: isDark,
-              onTap: () {},
-            ),
-            _buildFeatureButton(
-              icon: Icons.summarize,
-              label: "Report Summary",
-              isDark: isDark,
-              onTap: () {},
-            ),
-            _buildFeatureButton(
-              icon: Icons.medication,
-              label: "Medicines",
-              isDark: isDark,
-              onTap: () {},
-            ),
-          ],
+              index: index,
+            );
+          },
         ),
       ],
     );
@@ -270,50 +436,254 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildFeatureButton({
     required IconData icon,
     required String label,
+    required Color color,
     required bool isDark,
-    required VoidCallback onTap,
+    required int index,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        decoration: BoxDecoration(
-          color: isDark ? Colors.grey[800] : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isDark ? Colors.blueGrey[700]! : Colors.blueGrey[100]!,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isDark ? Colors.black54 : Colors.grey.withOpacity(0.2),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 32,
-              color: isDark ? Colors.blueGrey[300] : const Color(0xFF153D8A),
-            ),
-            const SizedBox(height: 10),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: isDark ? Colors.grey[300] : Colors.grey[800],
+    return TweenAnimationBuilder(
+      duration: Duration(milliseconds: 300 + (index * 100)),
+      tween: Tween<double>(begin: 0, end: 1),
+      builder: (context, double value, child) {
+        return Transform.scale(
+          scale: value,
+          child: InkWell(
+            onTap: () {},
+            borderRadius: BorderRadius.circular(16),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF14213D).withOpacity(0.3) : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: color.withOpacity(0.2),
+                  width: 1,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isDark ? Colors.black.withOpacity(0.2) : Colors.grey.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      icon,
+                      size: 24,
+                      color: color,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? const Color(0xFFE5E5E5) : const Color(0xFF14213D),
+                      height: 1.2,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildFeaturesSection(bool isDark) {
+    final offers = [
+      {
+        'title': '24/7 AI Support',
+        'subtitle': 'Get instant medical guidance anytime',
+        'icon': Icons.support_agent,
+      },
+      {
+        'title': 'Expert Consultation',
+        'subtitle': 'Connect with certified doctors',
+        'icon': Icons.medical_services,
+      },
+      {
+        'title': 'Smart Health Tracking',
+        'subtitle': 'Monitor your wellness journey',
+        'icon': Icons.trending_up,
+      },
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Best Features & Offers',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : const Color(0xFF14213D),
+          ),
         ),
+        const SizedBox(height: 20),
+        SizedBox(
+          height: 160,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            itemCount: offers.length,
+            itemBuilder: (context, index) {
+              final offer = offers[index];
+              return Container(
+                width: 280,
+                margin: EdgeInsets.only(
+                  right: 16,
+                  left: index == 0 ? 4 : 0,
+                ),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFFFCA311).withOpacity(0.8),
+                      const Color(0xFFFCA311).withOpacity(0.6),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFCA311).withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        offer['icon'] as IconData,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      offer['title'] as String,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      offer['subtitle'] as String,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white.withOpacity(0.9),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAssuranceSection(bool isDark) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF14213D).withOpacity(0.2) : const Color(0xFFF8F9FA),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? const Color(0xFF14213D).withOpacity(0.3) : const Color(0xFFE5E5E5),
+        ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFCA311).withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.favorite,
+              color: Color(0xFFFCA311),
+              size: 30,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No more medical worries',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: isDark ? const Color(0xFFFCA311) : const Color(0xFF14213D), // Changed color for dark mode
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'We simplify your health journey, connecting you with top-tier care and answers you can trust, all at your fingertips. Focus on living, we\'ll handle the rest.',
+            style: TextStyle(
+              fontSize: 16,
+              height: 1.5,
+              color: isDark ? const Color(0xFFE5E5E5).withOpacity(0.8) : Colors.grey[600],
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFooter(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'Designed with ',
+            style: TextStyle(
+              fontSize: 14,
+              color: isDark ? const Color(0xFFE5E5E5).withOpacity(0.6) : Colors.grey[500],
+            ),
+          ),
+          const Text(
+            '❤️',
+            style: TextStyle(fontSize: 16),
+          ),
+          Text(
+            ' for your well-being',
+            style: TextStyle(
+              fontSize: 14,
+              color: isDark ? const Color(0xFFE5E5E5).withOpacity(0.6) : Colors.grey[500],
+            ),
+          ),
+        ],
       ),
     );
   }
