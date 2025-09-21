@@ -1,4 +1,5 @@
 import 'package:client/screens/DoctorInfo.dart';
+import 'package:client/screens/DoctorgetInfo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -27,7 +28,7 @@ class _Doctor_screenState extends State<Doctor_screen> {
               onQRCodeScanned: (code) {
                 setState(() => scannedData = code);
                 if(code.isNotEmpty){
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => Doctorinfo(data: code,),));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => Doctorgetinfo(data: code,),));
                 }
                 // Optionally, you can navigate or handle the result here
               },
