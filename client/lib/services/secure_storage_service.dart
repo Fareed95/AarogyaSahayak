@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../services/secure_storage_service.dart';
+import '../screens/login_screen.dart';
 
 class SecureStorageService {
   // Create storage instance with Android options
@@ -11,37 +13,72 @@ class SecureStorageService {
   );
 
   // Store JWT token
-  Future<void> storeJwtToken(String token) async {
+  Future<
+    void
+  >
+  storeJwtToken(
+    String token,
+  ) async {
     try {
-      await _storage.write(key: 'jwt_token', value: token);
-      print('JWT token stored successfully');
-    } catch (e) {
-      print('Error storing JWT: $e');
-      throw Exception('Failed to store token');
+      await _storage.write(
+        key: 'jwt_token',
+        value: token,
+      );
+      print(
+        'JWT token stored successfully',
+      );
+    } catch (
+      e
+    ) {
+      print(
+        'Error storing JWT: $e',
+      );
+      throw Exception(
+        'Failed to store token',
+      );
     }
   }
 
   // Retrieve JWT token
-  Future<String?> getJwtToken() async {
+  Future<
+    String?
+  >
+  getJwtToken() async {
     try {
-      return await _storage.read(key: 'jwt_token');
-    } catch (e) {
-      print('Error retrieving JWT: $e');
+      return await _storage.read(
+        key: 'jwt_token',
+      );
+    } catch (
+      e
+    ) {
+      print(
+        'Error retrieving JWT: $e',
+      );
       return null;
     }
   }
 
   // Delete JWT token (for logout)
-  Future<void> deleteJwtToken() async {
+  Future<
+    void
+  >
+  deleteJwtToken() async {
     try {
-      await _storage.delete(key: 'jwt_token');
-      print('JWT token deleted successfully');
-    } catch (e) {
-      print('Error deleting JWT: $e');
-      throw Exception('Failed to delete token');
+      await _storage.delete(
+        key: 'jwt_token',
+      );
+      print(
+        'JWT token deleted successfully',
+      );
+    } catch (
+      e
+    ) {
+      print(
+        'Error deleting JWT: $e',
+      );
+      throw Exception(
+        'Failed to delete token',
+      );
     }
   }
-
-
-
 }

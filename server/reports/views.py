@@ -100,8 +100,10 @@ class UserChatBotAPIView(APIView):
 
     def post(self, request):
         user = authenticate_request(request, need_user=True)
+        print(user)
     
         user_message = request.data.get("message", "").strip()
+        print(user_message)
         if not user_message:
             return Response({"error": "Message is required"}, status=400)
 
