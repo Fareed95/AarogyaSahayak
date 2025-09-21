@@ -128,6 +128,68 @@ class NotificationViewset(APIView):
             "fcm_responses": results
         }, status=status.HTTP_200_OK)
 
+class medicineNotificationViewset(APIView):
+    def post(self, request):
+        title = request.data.get('title', 'Notification')
+        body = request.data.get('body', '')
+        user = authenticate_request(request, need_user=True)
+
+        # Get the FCM token of the authenticated user
+        user_deets = UserDeets.objects.filter(user=user).first()
+
+        if not user_deets or not user_deets.fcm_token:
+            return Response(
+                {"message": "User has no FCM token."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # OAuth2 access token
+        try:
+            token = get_access_token()
+        except Exception as e:
+            return Response(
+                {"error": f"Access token error: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        # FCM endpoint
+        url = "https://fcm.googleapis.com/v1/projects/hackathon-996b5/messages:send"
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json; charset=UTF-8"
+        }
+
+        # Send notification only to the authenticated user's FCM token
+        payload = {
+            "message": {
+                "token": user_deets.fcm_token,
+                "notification": {"title": title, "body": body},
+                "data": {
+                    "click_action": "FLUTTER_NOTIFICATION_CLICK",
+                    "id": "1",
+                    "status": "done"
+                }
+            }
+        }
+
+        try:
+            response = requests.post(url, headers=headers, json=payload)
+            return Response({
+                "message": "Notification sent successfully",
+                "fcm_response": {
+                    "status_code": response.status_code,
+                    "response_text": response.text
+                }
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"error": f"Failed to send notification: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+
+
 
 class getMedicineViewset(APIView):
     def post(self, request):
