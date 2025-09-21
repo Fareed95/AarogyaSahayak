@@ -50,7 +50,7 @@ class _ReportInstancesScreenState
 
       final response = await http.get(
         Uri.parse(
-          'http://localhost:8000/api/reports/get_user_instances/',
+          'https://codenebula-internal-round-25.onrender.com/api/reports/get_user_instances/',
         ),
         headers: {
           'Content-Type': 'application/json',

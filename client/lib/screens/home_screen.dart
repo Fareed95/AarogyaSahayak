@@ -9,6 +9,7 @@ import '../screens/notification_screen.dart';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
+import 'report_instance_screen.dart';
 
 class HomeScreen
     extends
@@ -382,6 +383,7 @@ class _HomeScreenState
                       // Upload Section
                       _buildUploadSection(
                         isDark,
+                        context,
                       ),
                       const SizedBox(
                         height: 32,
@@ -596,187 +598,257 @@ class _HomeScreenState
 
   Widget _buildUploadSection(
     bool isDark,
+    BuildContext context, // need context for navigation
   ) {
-    return InkWell(
-      onTap: _handleFileUpload,
-      borderRadius: BorderRadius.circular(
-        20,
-      ),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(
-          28,
-        ),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              isDark
-                  ? const Color(
-                      0xFF14213D,
-                    ).withOpacity(
-                      0.3,
-                    )
-                  : Colors.white,
-              isDark
-                  ? const Color(
-                      0xFF14213D,
-                    ).withOpacity(
-                      0.1,
-                    )
-                  : const Color(
-                      0xFFF8F9FA,
-                    ),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+    return Column(
+      children: [
+        InkWell(
+          onTap: _handleFileUpload,
           borderRadius: BorderRadius.circular(
             20,
           ),
-          border: Border.all(
-            color: isDark
-                ? const Color(
-                    0xFF14213D,
-                  ).withOpacity(
-                    0.5,
-                  )
-                : const Color(
-                    0xFFE5E5E5,
-                  ),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isDark
-                  ? Colors.black.withOpacity(
-                      0.3,
-                    )
-                  : Colors.grey.withOpacity(
-                      0.08,
-                    ),
-              blurRadius: 15,
-              offset: const Offset(
-                0,
-                5,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(
+              28,
+            ),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  isDark
+                      ? const Color(
+                          0xFF14213D,
+                        ).withOpacity(
+                          0.3,
+                        )
+                      : Colors.white,
+                  isDark
+                      ? const Color(
+                          0xFF14213D,
+                        ).withOpacity(
+                          0.1,
+                        )
+                      : const Color(
+                          0xFFF8F9FA,
+                        ),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color:
-                    const Color(
-                      0xFFFCA311,
-                    ).withOpacity(
-                      0.1,
-                    ),
-                shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(
+                20,
               ),
-              child: const Icon(
-                Icons.cloud_upload_outlined,
-                size: 40,
-                color: Color(
-                  0xFFFCA311,
-                ),
-              ),
-            ),
-            const SizedBox(
-              height: 20,
-            ),
-            Text(
-              'Upload Your Medical Documents',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: isDark
-                    ? Colors.white
-                    : const Color(
-                        0xFF14213D,
-                      ),
-              ),
-            ),
-            const SizedBox(
-              height: 8,
-            ),
-            Text(
-              'PDF format for a consolidated health record',
-              style: TextStyle(
-                fontSize: 14,
+              border: Border.all(
                 color: isDark
                     ? const Color(
-                        0xFFE5E5E5,
+                        0xFF14213D,
                       ).withOpacity(
-                        0.8,
+                        0.5,
                       )
-                    : Colors.grey[600],
+                    : const Color(
+                        0xFFE5E5E5,
+                      ),
+                width: 1,
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(
-              height: 24,
-            ),
-            AnimatedContainer(
-              duration: const Duration(
-                milliseconds: 200,
-              ),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 40,
-                  vertical: 16,
+              boxShadow: [
+                BoxShadow(
+                  color: isDark
+                      ? Colors.black.withOpacity(
+                          0.3,
+                        )
+                      : Colors.grey.withOpacity(
+                          0.08,
+                        ),
+                  blurRadius: 15,
+                  offset: const Offset(
+                    0,
+                    5,
+                  ),
                 ),
-                decoration: BoxDecoration(
-                  color: const Color(
-                    0xFFFCA311,
+              ],
+            ),
+            child: Column(
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color:
+                        const Color(
+                          0xFFFCA311,
+                        ).withOpacity(
+                          0.1,
+                        ),
+                    shape: BoxShape.circle,
                   ),
-                  borderRadius: BorderRadius.circular(
-                    25,
+                  child: const Icon(
+                    Icons.cloud_upload_outlined,
+                    size: 40,
+                    color: Color(
+                      0xFFFCA311,
+                    ),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color:
-                          const Color(
-                            0xFFFCA311,
-                          ).withOpacity(
-                            0.3,
+                ),
+                const SizedBox(
+                  height: 20,
+                ),
+                Text(
+                  'Upload Your Medical Documents',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: isDark
+                        ? Colors.white
+                        : const Color(
+                            0xFF14213D,
                           ),
-                      blurRadius: 8,
-                      offset: const Offset(
-                        0,
-                        3,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.upload_file,
-                      size: 20,
-                      color: Colors.white,
-                    ),
-                    SizedBox(
-                      width: 8,
-                    ),
-                    Text(
-                      'Upload Document',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
+                const SizedBox(
+                  height: 8,
                 ),
-              ),
+                Text(
+                  'PDF format for a consolidated health record',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDark
+                        ? const Color(
+                            0xFFE5E5E5,
+                          ).withOpacity(
+                            0.8,
+                          )
+                        : Colors.grey[600],
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(
+                  height: 24,
+                ),
+                AnimatedContainer(
+                  duration: const Duration(
+                    milliseconds: 200,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 40,
+                      vertical: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(
+                        0xFFFCA311,
+                      ),
+                      borderRadius: BorderRadius.circular(
+                        25,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color:
+                              const Color(
+                                0xFFFCA311,
+                              ).withOpacity(
+                                0.3,
+                              ),
+                          blurRadius: 8,
+                          offset: const Offset(
+                            0,
+                            3,
+                          ),
+                        ),
+                      ],
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.upload_file,
+                          size: 20,
+                          color: Colors.white,
+                        ),
+                        SizedBox(
+                          width: 8,
+                        ),
+                        Text(
+                          'Upload Document',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
+        const SizedBox(
+          height: 20,
+        ),
+        // New "Your Reports" button
+        InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (
+                      context,
+                    ) => const ReportInstancesScreen(),
+              ),
+            );
+          },
+          borderRadius: BorderRadius.circular(
+            25,
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 40,
+              vertical: 16,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.blueAccent,
+              borderRadius: BorderRadius.circular(
+                25,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.blueAccent.withOpacity(
+                    0.3,
+                  ),
+                  blurRadius: 8,
+                  offset: const Offset(
+                    0,
+                    3,
+                  ),
+                ),
+              ],
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.receipt_long,
+                  size: 20,
+                  color: Colors.white,
+                ),
+                SizedBox(
+                  width: 8,
+                ),
+                Text(
+                  'Your Reports',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
