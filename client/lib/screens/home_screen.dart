@@ -173,10 +173,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildTopBanner(bool isDark) {
+Widget _buildTopBanner(bool isDark) {
     return Container(
       width: double.infinity,
-      height: 280, // Increased height for bigger image
+      height: 150, 
       margin: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -201,13 +201,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
       child: Stack(
         children: [
-          // Doctor Image - Made much bigger while keeping alignment
+          // Doctor Image - Adjusted proportionally for smaller container
           Positioned(
-            right: 5, // Adjusted positioning for much bigger image
+            right: 5,
             bottom: 0,
             child: Container(
-              height: 260, // Much bigger - increased from 220
-              width: 200, // Much bigger - increased from 170
+              height: 200, // Reduced from 260 to 200
+              width: 180, // Reduced from 200 to 180
               child: ClipRRect(
                 borderRadius: const BorderRadius.only(
                   bottomRight: Radius.circular(24),
@@ -220,13 +220,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ),
             ),
           ),
-          // Text Content - Slightly decreased size but well balanced with bigger image
+          // Text Content - Kept proportional
           Positioned(
             left: 28,
             top: 0,
             bottom: 0,
             child: Container(
-              width: MediaQuery.of(context).size.width * 0.48, // Adjusted for bigger image
+              width: MediaQuery.of(context).size.width * 0.48,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -236,14 +236,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       Icon(
                         Icons.health_and_safety,
                         color: const Color(0xFFFCA311),
-                        size: 28, // Slightly decreased from 32
+                        size: 28,
                       ),
                       const SizedBox(width: 10),
                       const Text(
                         'Get Medical',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 23, // Slightly decreased from 26
+                          fontSize: 23,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.5,
                         ),
@@ -252,12 +252,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ),
                   const SizedBox(height: 3),
                   const Padding(
-                    padding: EdgeInsets.only(left: 38), // Adjusted for smaller icon
+                    padding: EdgeInsets.only(left: 38),
                     child: Text(
                       'Assistance',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 23, // Slightly decreased from 26
+                        fontSize: 23,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.5,
                       ),
@@ -265,12 +265,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ),
                   const SizedBox(height: 6),
                   const Padding(
-                    padding: EdgeInsets.only(left: 38), // Adjusted for smaller icon
+                    padding: EdgeInsets.only(left: 38),
                     child: Text(
                       'in Seconds',
                       style: TextStyle(
                         color: Color(0xFFFCA311),
-                        fontSize: 18, // Slightly decreased from 20
+                        fontSize: 18,
                         fontWeight: FontWeight.w500,
                         letterSpacing: 0.3,
                       ),
@@ -284,7 +284,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
     );
   }
-
   Widget _buildUploadSection(bool isDark) {
     return InkWell(
       onTap: _handleFileUpload,
