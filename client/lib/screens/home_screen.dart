@@ -661,7 +661,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget _buildTopBanner(bool isDark) {
     return Container(
       width: double.infinity,
-      height: 280,
+      height: 170,
       margin: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
       decoration: BoxDecoration(
         gradient: LinearGradient(

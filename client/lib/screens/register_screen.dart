@@ -101,54 +101,103 @@ class _SignupPageState extends State<SignupPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF14213D),
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back_ios_rounded,
-            color: Colors.white,
-            size: 20,
-          ),
-        ),
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF14213D),
-              Color(0xFF1A2A4A),
-              Color(0xFF14213D),
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
-                    _buildHeader(),
-                    const SizedBox(height: 40),
-                    _buildSignupForm(),
-                    const SizedBox(height: 32),
-                    _buildSignupButton(),
-                    const SizedBox(height: 24),
-                    _buildLoginLink(),
-                    const SizedBox(height: 32),
-                  ],
+      backgroundColor: const Color(0xffe5e5e5),
+      body: SingleChildScrollView(
+        child: Container(
+          height: screenHeight,
+          child: Column(
+            children: [
+              // Logo section
+              Container(
+                height: screenHeight * 0.25,
+                width: double.infinity,
+                child: Center(
+                  child: Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.1),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/logo.png',
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Color(0xFFFCA311),
+                            ),
+                            child: const Icon(
+                              Icons.medical_services_rounded,
+                              size: 60,
+                              color: Colors.white,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
+              
+              // Card section
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(32.0),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 20),
+                          _buildHeader(),
+                          const SizedBox(height: 30),
+                          Expanded(
+                            child: SingleChildScrollView(
+                              child: Column(
+                                children: [
+                                  _buildSignupForm(),
+                                  const SizedBox(height: 30),
+                                  _buildSignupButton(),
+                                  const SizedBox(height: 20),
+                                  _buildDivider(),
+                                  const SizedBox(height: 20),
+                                  _buildSocialButtons(),
+                                  const SizedBox(height: 20),
+                                  _buildLoginLink(),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -157,72 +206,23 @@ class _SignupPageState extends State<SignupPage> {
 
   Widget _buildHeader() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Doctor 3D Image
-        Container(
-          width: 180,
-          height: 180,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: [
-                const Color(0xFFFCA311).withOpacity(0.2),
-                const Color(0xFF4A5F7A).withOpacity(0.1),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFFFCA311).withOpacity(0.3),
-                blurRadius: 30,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: ClipOval(
-            child: Image.asset(
-              'assets/doctor3d.png',
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [
-                        const Color(0xFFFCA311).withOpacity(0.8),
-                        const Color(0xFF4A5F7A).withOpacity(0.6),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.medical_services_rounded,
-                    size: 80,
-                    color: Colors.white,
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-        const SizedBox(height: 32),
         const Text(
-          'Create an account',
+          'Create Account',
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w700,
-            color: Colors.white,
+            color: Color(0xFFFCA311),
             letterSpacing: 0.5,
           ),
         ),
         const SizedBox(height: 8),
         Text(
-          'Join us for a healthier tomorrow',
+          'Please fill in the form to continue',
           style: TextStyle(
             fontSize: 16,
-            color: Colors.white.withOpacity(0.7),
+            color: Colors.grey.shade600,
             fontWeight: FontWeight.w400,
           ),
         ),
@@ -251,7 +251,7 @@ class _SignupPageState extends State<SignupPage> {
         const SizedBox(height: 20),
         _buildCustomTextField(
           controller: _emailController,
-          label: 'Email',
+          label: 'Email Address',
           icon: Icons.email_outlined,
           keyboardType: TextInputType.emailAddress,
           validator: (value) {
@@ -276,7 +276,7 @@ class _SignupPageState extends State<SignupPage> {
               _isPasswordVisible
                   ? Icons.visibility_rounded
                   : Icons.visibility_off_rounded,
-              color: Colors.white.withOpacity(0.6),
+              color: Colors.grey.shade500,
               size: 22,
             ),
             onPressed: () {
@@ -304,7 +304,7 @@ class _SignupPageState extends State<SignupPage> {
               _isConfirmPasswordVisible
                   ? Icons.visibility_rounded
                   : Icons.visibility_off_rounded,
-              color: Colors.white.withOpacity(0.6),
+              color: Colors.grey.shade500,
               size: 22,
             ),
             onPressed: () {
@@ -334,87 +334,75 @@ class _SignupPageState extends State<SignupPage> {
     TextInputType keyboardType = TextInputType.text,
     String? Function(String?)? validator,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+    return TextFormField(
+      controller: controller,
+      obscureText: obscureText,
+      keyboardType: keyboardType,
+      style: const TextStyle(
+        color: Colors.black87,
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
       ),
-      child: TextFormField(
-        controller: controller,
-        obscureText: obscureText,
-        keyboardType: keyboardType,
-        style: const TextStyle(
-          color: Colors.white,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(
+          color: Colors.grey.shade600,
           fontSize: 16,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w400,
         ),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(
-            color: Colors.white.withOpacity(0.7),
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
+        prefixIcon: Icon(
+          icon,
+          color: const Color(0xFFFCA311),
+          size: 22,
+        ),
+        suffixIcon: suffixIcon,
+        filled: true,
+        fillColor: Colors.grey.shade50,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide(
+            color: Colors.grey.shade300,
+            width: 1,
           ),
-          prefixIcon: Icon(
-            icon,
-            color: const Color(0xFFFCA311),
-            size: 22,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide(
+            color: Colors.grey.shade300,
+            width: 1,
           ),
-          suffixIcon: suffixIcon,
-          filled: true,
-          fillColor: Colors.white.withOpacity(0.05),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(
-              color: Colors.white.withOpacity(0.1),
-              width: 1,
-            ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: const BorderSide(
+            color: Color(0xFFFCA311),
+            width: 2,
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(
-              color: Colors.white.withOpacity(0.1),
-              width: 1,
-            ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(
-              color: Color(0xFFFCA311),
-              width: 2,
-            ),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(
-              color: Colors.redAccent,
-              width: 1,
-            ),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(
-              color: Colors.redAccent,
-              width: 2,
-            ),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 20,
-          ),
-          errorStyle: const TextStyle(
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: const BorderSide(
             color: Colors.redAccent,
-            fontSize: 12,
+            width: 1,
           ),
         ),
-        validator: validator,
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: const BorderSide(
+            color: Colors.redAccent,
+            width: 2,
+          ),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 18,
+        ),
+        errorStyle: const TextStyle(
+          color: Colors.redAccent,
+          fontSize: 12,
+        ),
       ),
+      validator: validator,
     );
   }
 
@@ -423,31 +411,23 @@ class _SignupPageState extends State<SignupPage> {
       width: double.infinity,
       height: 56,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFFFCA311),
-            const Color(0xFFFCA311).withOpacity(0.8),
-          ],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
+        borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFCA311).withOpacity(0.4),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
+            color: const Color(0xFFFCA311).withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: ElevatedButton(
         onPressed: _isLoading ? null : _signup,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
+          backgroundColor: const Color(0xFFFCA311),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(15),
           ),
+          elevation: 0,
         ),
         child: _isLoading
             ? const SizedBox(
@@ -455,18 +435,105 @@ class _SignupPageState extends State<SignupPage> {
                 height: 24,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation(Color(0xFF14213D)),
+                  valueColor: AlwaysStoppedAnimation(Colors.white),
                 ),
               )
             : const Text(
-                'Continue',
+                'Create Account',
                 style: TextStyle(
                   fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF14213D),
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
                   letterSpacing: 0.5,
                 ),
               ),
+      ),
+    );
+  }
+
+  Widget _buildDivider() {
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            height: 1,
+            color: const Color(0xFFFCA311).withOpacity(0.3),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            'Or continue with',
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              fontSize: 14,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Container(
+            height: 1,
+            color: const Color(0xFFFCA311).withOpacity(0.3),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSocialButtons() {
+    return Container(
+      width: double.infinity,
+      height: 56,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(
+          color: const Color(0xFFFCA311).withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: ElevatedButton(
+        onPressed: () {
+          // Google sign up logic
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 24,
+              height: 24,
+              decoration: const BoxDecoration(
+                color: Colors.red,
+                shape: BoxShape.circle,
+              ),
+              child: const Center(
+                child: Text(
+                  'G',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Continue with Google',
+              style: TextStyle(
+                color: Colors.grey.shade700,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -478,7 +545,7 @@ class _SignupPageState extends State<SignupPage> {
         Text(
           "Already have an account? ",
           style: TextStyle(
-            color: Colors.white.withOpacity(0.7),
+            color: Colors.grey.shade600,
             fontSize: 15,
             fontWeight: FontWeight.w400,
           ),
@@ -488,13 +555,11 @@ class _SignupPageState extends State<SignupPage> {
             Navigator.pop(context);
           },
           child: const Text(
-            'Login',
+            'Sign In',
             style: TextStyle(
               color: Color(0xFFFCA311),
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              decoration: TextDecoration.underline,
-              decorationColor: Color(0xFFFCA311),
             ),
           ),
         ),

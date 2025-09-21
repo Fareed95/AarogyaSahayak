@@ -488,27 +488,27 @@ import '../screens/login_screen.dart';
 class Layout extends StatefulWidget {
   final bool isDarkMode;
   final VoidCallback onThemeToggle;
-
+  
   const Layout({
     super.key,
     required this.isDarkMode,
     required this.onThemeToggle,
   });
-
+  
   @override
   State<Layout> createState() => _LayoutState();
 }
 
 class _LayoutState extends State<Layout> {
   int selectedIndex = 0;
-
+  
   void _onDrawerItemTap(int index) {
     Navigator.pop(context); // Close drawer
     setState(() {
       selectedIndex = index;
     });
   }
-
+  
   @override
   Widget build(BuildContext context) {
     final pages = [
@@ -517,12 +517,31 @@ class _LayoutState extends State<Layout> {
       const Nutrition(), // Widget
       const ProfileScreen(), // Widget (PascalCase)
     ];
-
+    
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Hackathon"),
+        backgroundColor: const Color(0xFF2C3E50),
+        foregroundColor: Colors.white,
+        title: const Text(
+          "Aarogya Sahayak",
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         centerTitle: true,
+        elevation: 0,
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu, color: Colors.white),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
         actions: [
+          ThemeSwitch(
+            isDarkMode: widget.isDarkMode,
+            onToggle: widget.onThemeToggle,
+          ),
           FutureBuilder<bool>(
             future: Info().isLoggedIn(),
             builder: (context, snapshot) {
@@ -532,33 +551,30 @@ class _LayoutState extends State<Layout> {
               return snapshot.data!
                   ? const SizedBox.shrink()
                   : TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const login_screen(), // PascalCase
-                    ),
-                  );
-                },
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  foregroundColor: Colors.white,
-                  side: const BorderSide(color: Colors.white),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                ),
-                child: const Text(
-                  'Login',
-                  style: TextStyle(fontSize: 14),
-                ),
-              );
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const login_screen(), // PascalCase
+                          ),
+                        );
+                      },
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.white),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                      ),
+                      child: const Text(
+                        'Login',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                    );
             },
           ),
-          ThemeSwitch(
-            isDarkMode: widget.isDarkMode,
-            onToggle: widget.onThemeToggle,
-          ),
+          const SizedBox(width: 8), // Small spacing from edge
         ],
       ),
       drawer: CustomDrawer(onItemTap: _onDrawerItemTap),
@@ -595,4 +611,3 @@ class _LayoutState extends State<Layout> {
     );
   }
 }
-
