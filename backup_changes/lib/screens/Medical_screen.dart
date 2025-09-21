@@ -1,20 +1,17 @@
-import 'package:client/screens/DoctorInfo.dart';
-import 'package:client/screens/DoctorgetInfo.dart';
+import 'package:client/component/qr_scanner_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart';
-import 'package:qr_flutter/qr_flutter.dart';
+import 'Doctor_screen.dart'; // Ensure this import is correct
 
-import '../component/qr_scanner_widget.dart';
-class Doctor_screen extends StatefulWidget {
-
-  const Doctor_screen({super.key});
+class Medical_screen extends StatefulWidget {
+  const Medical_screen({super.key});
 
   @override
-  State<Doctor_screen> createState() => _Doctor_screenState();
+  State<Medical_screen> createState() => _Medical_screenState();
 }
 
-class _Doctor_screenState extends State<Doctor_screen> {
+class _Medical_screenState extends State<Medical_screen> {
   String? scannedData;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,9 +24,6 @@ class _Doctor_screenState extends State<Doctor_screen> {
             child: QRScannerSimple(
               onQRCodeScanned: (code) {
                 setState(() => scannedData = code);
-                if(code.isNotEmpty){
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => Doctorgetinfo(data: code,),));
-                }
                 // Optionally, you can navigate or handle the result here
               },
             ),

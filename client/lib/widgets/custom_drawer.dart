@@ -2,14 +2,10 @@ import 'package:flutter/material.dart';
 import '../screens/Doctor_screen.dart';
 import '../screens/Medical_screen.dart';
 import '../screens/ChatBot_Screen.dart';
+import '../screens/document_chatbot_screen.dart'; // ✅ Import your new screen
 
-class CustomDrawer
-    extends
-        StatelessWidget {
-  final Function(
-    int,
-  )
-  onItemTap;
+class CustomDrawer extends StatelessWidget {
+  final Function(int) onItemTap;
 
   const CustomDrawer({
     super.key,
@@ -17,20 +13,13 @@ class CustomDrawer
   });
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
+  Widget build(BuildContext context) {
     final bool isDark =
-        Theme.of(
-          context,
-        ).brightness ==
-        Brightness.dark;
+        Theme.of(context).brightness == Brightness.dark;
 
     return Drawer(
       backgroundColor: isDark
-          ? const Color(
-              0xFF1A1A1A,
-            )
+          ? const Color(0xFF1A1A1A)
           : Colors.white,
       child: ListView(
         padding: EdgeInsets.zero,
@@ -40,14 +29,8 @@ class CustomDrawer
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  const Color(
-                    0xFF14213D,
-                  ),
-                  const Color(
-                    0xFF14213D,
-                  ).withOpacity(
-                    0.8,
-                  ),
+                  const Color(0xFF14213D),
+                  const Color(0xFF14213D).withOpacity(0.8),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -59,14 +42,10 @@ class CustomDrawer
               children: [
                 Icon(
                   Icons.health_and_safety,
-                  color: Color(
-                    0xFFFCA311,
-                  ),
+                  color: Color(0xFFFCA311),
                   size: 40,
                 ),
-                SizedBox(
-                  height: 12,
-                ),
+                SizedBox(height: 12),
                 Text(
                   'Aarogya Sahayak',
                   style: TextStyle(
@@ -80,18 +59,14 @@ class CustomDrawer
                   'Your Health Companion',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Color(
-                      0xFFFCA311,
-                    ),
+                    color: Color(0xFFFCA311),
                     letterSpacing: 0.3,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(
-            height: 8,
-          ),
+          const SizedBox(height: 8),
 
           // Main drawer items
           _buildDrawerItem(
@@ -110,22 +85,14 @@ class CustomDrawer
             1,
             isDark,
             onTapOverride: () {
-              Navigator.pop(
-                context,
-              ); // Close drawer first
+              Navigator.pop(context);
               Future.delayed(
-                Duration(
-                  milliseconds: 250,
-                ),
+                const Duration(milliseconds: 250),
                 () {
-                  // Give time for drawer animation
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder:
-                          (
-                            context,
-                          ) => const ChatBotScreen(),
+                      builder: (context) => const ChatBotScreen(),
                     ),
                   );
                 },
@@ -156,11 +123,34 @@ class CustomDrawer
             4,
             isDark,
           ),
+
+          // ✅ New Feature: Document Assistant
+          _buildDrawerItem(
+            context,
+            Icons.document_scanner_outlined,
+            Icons.document_scanner,
+            "Ask Questions About Your Report",
+            5,
+            isDark,
+            onTapOverride: () {
+              Navigator.pop(context);
+              Future.delayed(
+                const Duration(milliseconds: 250),
+                () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          const DocumentChatBotScreen(),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+
           const Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 8,
-            ),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Divider(),
           ),
 
@@ -172,16 +162,11 @@ class CustomDrawer
             "Doctor",
             isDark,
             onTapOverride: () {
-              Navigator.pop(
-                context,
-              );
+              Navigator.pop(context);
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder:
-                      (
-                        context,
-                      ) => const Doctor_screen(),
+                  builder: (context) => const Doctor_screen(),
                 ),
               );
             },
@@ -193,23 +178,16 @@ class CustomDrawer
             "Medical Store",
             isDark,
             onTapOverride: () {
-              Navigator.pop(
-                context,
-              );
+              Navigator.pop(context);
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder:
-                      (
-                        context,
-                      ) => const Medical_screen(),
+                  builder: (context) => const Medical_screen(),
                 ),
               );
             },
           ),
-          const SizedBox(
-            height: 20,
-          ),
+          const SizedBox(height: 20),
         ],
       ),
     );
@@ -226,61 +204,32 @@ class CustomDrawer
     VoidCallback? onTapOverride,
   }) {
     return Container(
-      margin: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 2,
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(
-          12,
-        ),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
         leading: Icon(
           outlinedIcon,
           color: isDark
               ? Colors.white70
-              : const Color(
-                  0xFF14213D,
-                ).withOpacity(
-                  0.8,
-                ),
+              : const Color(0xFF14213D).withOpacity(0.8),
           size: 24,
         ),
         title: Text(
           title,
           style: TextStyle(
-            color: isDark
-                ? Colors.white
-                : const Color(
-                    0xFF14213D,
-                  ),
+            color: isDark ? Colors.white : const Color(0xFF14213D),
             fontWeight: FontWeight.w500,
             fontSize: 16,
           ),
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(
-            12,
-          ),
+          borderRadius: BorderRadius.circular(12),
         ),
-        onTap:
-            onTapOverride ??
-            () => onItemTap(
-              index,
-            ),
-        hoverColor:
-            const Color(
-              0xFF14213D,
-            ).withOpacity(
-              0.1,
-            ),
-        splashColor:
-            const Color(
-              0xFF14213D,
-            ).withOpacity(
-              0.2,
-            ),
+        onTap: onTapOverride ?? () => onItemTap(index),
+        hoverColor: const Color(0xFF14213D).withOpacity(0.1),
+        splashColor: const Color(0xFF14213D).withOpacity(0.2),
       ),
     );
   }
@@ -295,26 +244,13 @@ class CustomDrawer
     VoidCallback? onTapOverride,
   }) {
     return Container(
-      margin: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 2,
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(
-          12,
-        ),
+        borderRadius: BorderRadius.circular(12),
         gradient: LinearGradient(
           colors: [
-            const Color(
-              0xFFFCA311,
-            ).withOpacity(
-              0.1,
-            ),
-            const Color(
-              0xFFFCA311,
-            ).withOpacity(
-              0.05,
-            ),
+            const Color(0xFFFCA311).withOpacity(0.1),
+            const Color(0xFFFCA311).withOpacity(0.05),
           ],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
@@ -323,48 +259,28 @@ class CustomDrawer
       child: ListTile(
         leading: Icon(
           outlinedIcon,
-          color: const Color(
-            0xFFFCA311,
-          ),
+          color: const Color(0xFFFCA311),
           size: 24,
         ),
         title: Text(
           title,
           style: TextStyle(
-            color: isDark
-                ? Colors.white
-                : const Color(
-                    0xFF14213D,
-                  ),
+            color: isDark ? Colors.white : const Color(0xFF14213D),
             fontWeight: FontWeight.w600,
             fontSize: 16,
           ),
         ),
-        trailing: Icon(
+        trailing: const Icon(
           Icons.arrow_forward_ios,
-          color: const Color(
-            0xFFFCA311,
-          ),
+          color: Color(0xFFFCA311),
           size: 16,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(
-            12,
-          ),
+          borderRadius: BorderRadius.circular(12),
         ),
         onTap: onTapOverride,
-        hoverColor:
-            const Color(
-              0xFFFCA311,
-            ).withOpacity(
-              0.1,
-            ),
-        splashColor:
-            const Color(
-              0xFFFCA311,
-            ).withOpacity(
-              0.2,
-            ),
+        hoverColor: const Color(0xFFFCA311).withOpacity(0.1),
+        splashColor: const Color(0xFFFCA311).withOpacity(0.2),
       ),
     );
   }
