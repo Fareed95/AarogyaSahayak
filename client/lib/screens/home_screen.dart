@@ -7,9 +7,13 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import '../screens/notification_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({
+    super.key,
+  });
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
@@ -75,23 +79,27 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    
+
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeInOut,
-    ));
-    
+    ).animate(
+      CurvedAnimation(
+        parent: _fadeController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.5),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutCubic,
-    ));
-    
+    ).animate(
+      CurvedAnimation(
+        parent: _slideController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+
     _fadeController.forward();
     _slideController.forward();
   }
@@ -130,7 +138,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
         Info().setDoctor(doctor);
         Info().setMedical(medical);
-
       } else {
         final errorData = jsonDecode(response.body);
         print(errorData);
@@ -140,7 +147,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         } else if (errorData.containsKey('error')) {
           errorMessage = errorData['error'];
         }
-        AwesomeSnackbar.error(context, "Error", errorMessage);
+        AwesomeSnackbar.error(
+          context,
+          "Error",
+          errorMessage,
+        );
       }
     } catch (error) {
       print(error);
@@ -152,8 +163,105 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
-  void _handleFileUpload() {
-    print("File upload initiated");
+  Future<void> _handleFileUpload() async {
+    try {
+      // 1. Pick PDF file
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
+
+      if (result == null) {
+        AwesomeSnackbar.error(
+          context,
+          "Cancelled",
+          "No file selected",
+        );
+        return;
+      }
+
+      File file = File(result.files.single.path!);
+
+      // 2. Ask user for Title
+      String? title = await showDialog<String>(
+        context: context,
+        builder: (context) {
+          final TextEditingController _titleController = TextEditingController();
+          return AlertDialog(
+            title: const Text("Enter Document Title"),
+            content: TextField(
+              controller: _titleController,
+              decoration: const InputDecoration(
+                hintText: "e.g. Blood Report",
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, null),
+                child: const Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, _titleController.text.trim()),
+                child: const Text("Upload"),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (title == null || title.isEmpty) {
+        AwesomeSnackbar.error(
+          context,
+          "Missing",
+          "Title is required",
+        );
+        return;
+      }
+
+      // 3. Get JWT Token
+      String? token = await SecureStorageService().getJwtToken();
+      if (token == null) {
+        AwesomeSnackbar.error(
+          context,
+          "Error",
+          "Not logged in. Please login again.",
+        );
+        return;
+      }
+
+      // 4. Create Multipart Request
+      var uri = Uri.parse("http://192.168.0.107:8000/api/reports/report/");
+      var request = http.MultipartRequest("POST", uri);
+
+      request.headers["Authorization"] = "$token";
+      request.files.add(await http.MultipartFile.fromPath("file", file.path));
+      request.fields["title"] = title;
+
+      // 5. Send Request
+      var response = await request.send();
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        AwesomeSnackbar.success(
+          context,
+          "Success",
+          "Document uploaded successfully!",
+        );
+      } else {
+        final responseBody = await response.stream.bytesToString();
+        AwesomeSnackbar.error(
+          context,
+          "Upload Failed",
+          responseBody,
+        );
+      }
+    } catch (e) {
+      print("Upload error: $e");
+      AwesomeSnackbar.error(
+        context,
+        "Error",
+        "Something went wrong while uploading.",
+      );
+    }
   }
 
   void _showNearestAshaBottomSheet() {
@@ -215,7 +323,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       IconButton(
                         icon: const Icon(Icons.my_location_outlined),
                         onPressed: () {
-                          // TODO: integrate geolocation (e.g. geolocator) and fetch actual nearest workers from backend
                           Navigator.of(ctx).pop();
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text("Use my location: (stub) — add geolocation integration.")),
@@ -306,7 +413,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
                   // Results list
                   ConstrainedBox(
-                    constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4), // Reduced height to prevent overflow
+                    constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4),
                     child: filtered.isEmpty
                         ? const Center(child: Padding(
                             padding: EdgeInsets.symmetric(vertical: 20),
@@ -349,7 +456,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                   ],
                                 ),
                                 onTap: () {
-                                  // Show quick details
                                   showDialog(
                                     context: ctx,
                                     builder: (dCtx) {
@@ -493,7 +599,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF000000) : const Color(0xFFFAFAFA),
@@ -518,7 +623,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       children: [
                         const SizedBox(height: 24),
                         
-                        // ASHA Worker Section - ADDED HERE
+                        // ASHA Worker Section
                         _buildNearestAshaSection(isDark),
                         const SizedBox(height: 32),
                         
@@ -556,13 +661,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget _buildTopBanner(bool isDark) {
     return Container(
       width: double.infinity,
-      height: 280, // Increased height for bigger image
+      height: 280,
       margin: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            isDark ? const Color(0xFF14213D) : const Color(0xFF14213D).withOpacity(0.9),
-            isDark ? const Color(0xFF14213D).withOpacity(0.8) : const Color(0xFF14213D).withOpacity(0.7),
+            isDark
+                ? const Color(0xFF14213D)
+                : const Color(0xFF14213D).withOpacity(0.9),
+            isDark
+                ? const Color(0xFF14213D).withOpacity(0.8)
+                : const Color(0xFF14213D).withOpacity(0.7),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -581,13 +690,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
       child: Stack(
         children: [
-          // Doctor Image - Made much bigger while keeping alignment
+          // Doctor Image
           Positioned(
-            right: 5, // Adjusted positioning for much bigger image
+            right: 5,
             bottom: 0,
             child: Container(
-              height: 260, // Much bigger - increased from 220
-              width: 200, // Much bigger - increased from 170
+              height: 260,
+              width: 200,
               child: ClipRRect(
                 borderRadius: const BorderRadius.only(
                   bottomRight: Radius.circular(24),
@@ -600,13 +709,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ),
             ),
           ),
-          // Text Content - Slightly decreased size but well balanced with bigger image
+          // Text Content
           Positioned(
             left: 28,
             top: 0,
             bottom: 0,
             child: Container(
-              width: MediaQuery.of(context).size.width * 0.48, // Adjusted for bigger image
+              width: MediaQuery.of(context).size.width * 0.48,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -616,14 +725,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       Icon(
                         Icons.health_and_safety,
                         color: const Color(0xFFFCA311),
-                        size: 28, // Slightly decreased from 32
+                        size: 28,
                       ),
                       const SizedBox(width: 10),
                       const Text(
                         'Get Medical',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 23, // Slightly decreased from 26
+                          fontSize: 23,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.5,
                         ),
@@ -632,12 +741,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ),
                   const SizedBox(height: 3),
                   const Padding(
-                    padding: EdgeInsets.only(left: 38), // Adjusted for smaller icon
+                    padding: EdgeInsets.only(left: 38),
                     child: Text(
                       'Assistance',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 23, // Slightly decreased from 26
+                        fontSize: 23,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.5,
                       ),
@@ -645,12 +754,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ),
                   const SizedBox(height: 6),
                   const Padding(
-                    padding: EdgeInsets.only(left: 38), // Adjusted for smaller icon
+                    padding: EdgeInsets.only(left: 38),
                     child: Text(
                       'in Seconds',
                       style: TextStyle(
                         color: Color(0xFFFCA311),
-                        fontSize: 18, // Slightly decreased from 20
+                        fontSize: 18,
                         fontWeight: FontWeight.w500,
                         letterSpacing: 0.3,
                       ),
@@ -675,20 +784,28 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              isDark ? const Color(0xFF14213D).withOpacity(0.3) : Colors.white,
-              isDark ? const Color(0xFF14213D).withOpacity(0.1) : const Color(0xFFF8F9FA),
+              isDark
+                  ? const Color(0xFF14213D).withOpacity(0.3)
+                  : Colors.white,
+              isDark
+                  ? const Color(0xFF14213D).withOpacity(0.1)
+                  : const Color(0xFFF8F9FA),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isDark ? const Color(0xFF14213D).withOpacity(0.5) : const Color(0xFFE5E5E5),
+            color: isDark
+                ? const Color(0xFF14213D).withOpacity(0.5)
+                : const Color(0xFFE5E5E5),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: isDark ? Colors.black.withOpacity(0.3) : Colors.grey.withOpacity(0.08),
+              color: isDark
+                  ? Colors.black.withOpacity(0.3)
+                  : Colors.grey.withOpacity(0.08),
               blurRadius: 15,
               offset: const Offset(0, 5),
             ),
@@ -723,41 +840,40 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               'PDF format for a consolidated health record',
               style: TextStyle(
                 fontSize: 14,
-                color: isDark ? const Color(0xFFE5E5E5).withOpacity(0.8) : Colors.grey[600],
+                color: isDark
+                    ? const Color(0xFFE5E5E5).withOpacity(0.8)
+                    : Colors.grey[600],
               ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFCA311),
-                  borderRadius: BorderRadius.circular(25),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFFCA311).withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFCA311),
+                borderRadius: BorderRadius.circular(25),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFFCA311).withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.upload_file, size: 20, color: Colors.white),
+                  SizedBox(width: 8),
+                  Text(
+                    'Upload Document',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
                     ),
-                  ],
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.upload_file, size: 20, color: Colors.white),
-                    SizedBox(width: 8),
-                    Text(
-                      'Upload Document',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -768,12 +884,36 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Widget _buildQuickAccessSection(bool isDark) {
     final features = [
-      {'icon': Icons.medical_services_outlined, 'label': 'Immediate\nDiagnosis', 'color': const Color(0xFFFCA311)}, // Changed color
-      {'icon': Icons.people_outline, 'label': 'Communities', 'color': const Color(0xFFFCA311)},
-      {'icon': Icons.smart_toy_outlined, 'label': 'AI Chat', 'color': const Color(0xFFFCA311)}, // Changed color
-      {'icon': Icons.restaurant_outlined, 'label': 'Nutrition', 'color': const Color(0xFFFCA311)},
-      {'icon': Icons.summarize_outlined, 'label': 'Report\nSummary', 'color': const Color(0xFFFCA311)}, // Changed color
-      {'icon': Icons.medication_outlined, 'label': 'Medicines', 'color': const Color(0xFFFCA311)},
+      {
+        'icon': Icons.medical_services_outlined,
+        'label': 'Immediate\nDiagnosis',
+        'color': const Color(0xFFFCA311),
+      },
+      {
+        'icon': Icons.people_outline,
+        'label': 'Communities',
+        'color': const Color(0xFFFCA311),
+      },
+      {
+        'icon': Icons.smart_toy_outlined,
+        'label': 'AI Chat',
+        'color': const Color(0xFFFCA311),
+      },
+      {
+        'icon': Icons.restaurant_outlined,
+        'label': 'Nutrition',
+        'color': const Color(0xFFFCA311),
+      },
+      {
+        'icon': Icons.summarize_outlined,
+        'label': 'Report\nSummary',
+        'color': const Color(0xFFFCA311),
+      },
+      {
+        'icon': Icons.medication_outlined,
+        'label': 'Medicines',
+        'color': const Color(0xFFFCA311),
+      },
     ];
 
     return Column(
@@ -832,7 +972,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF14213D).withOpacity(0.3) : Colors.white,
+                color: isDark
+                    ? const Color(0xFF14213D).withOpacity(0.3)
+                    : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: color.withOpacity(0.2),
@@ -840,7 +982,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: isDark ? Colors.black.withOpacity(0.2) : Colors.grey.withOpacity(0.1),
+                    color: isDark
+                        ? Colors.black.withOpacity(0.2)
+                        : Colors.grey.withOpacity(0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -869,7 +1013,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: isDark ? const Color(0xFFE5E5E5) : const Color(0xFF14213D),
+                      color: isDark
+                          ? const Color(0xFFE5E5E5)
+                          : const Color(0xFF14213D),
                       height: 1.2,
                     ),
                   ),
@@ -994,10 +1140,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF14213D).withOpacity(0.2) : const Color(0xFFF8F9FA),
+        color: isDark
+            ? const Color(0xFF14213D).withOpacity(0.2)
+            : const Color(0xFFF8F9FA),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? const Color(0xFF14213D).withOpacity(0.3) : const Color(0xFFE5E5E5),
+          color: isDark
+              ? const Color(0xFF14213D).withOpacity(0.3)
+              : const Color(0xFFE5E5E5),
         ),
       ),
       child: Column(
@@ -1021,7 +1171,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: isDark ? const Color(0xFFFCA311) : const Color(0xFF14213D), // Changed color for dark mode
+              color: isDark
+                  ? const Color(0xFFFCA311)
+                  : const Color(0xFF14213D),
             ),
           ),
           const SizedBox(height: 12),
@@ -1030,7 +1182,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             style: TextStyle(
               fontSize: 16,
               height: 1.5,
-              color: isDark ? const Color(0xFFE5E5E5).withOpacity(0.8) : Colors.grey[600],
+              color: isDark
+                  ? const Color(0xFFE5E5E5).withOpacity(0.8)
+                  : Colors.grey[600],
             ),
             textAlign: TextAlign.center,
           ),
@@ -1049,7 +1203,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             'Designed with ',
             style: TextStyle(
               fontSize: 14,
-              color: isDark ? const Color(0xFFE5E5E5).withOpacity(0.6) : Colors.grey[500],
+              color: isDark
+                  ? const Color(0xFFE5E5E5).withOpacity(0.6)
+                  : Colors.grey[500],
             ),
           ),
           const Text(
@@ -1060,7 +1216,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             ' for your well-being',
             style: TextStyle(
               fontSize: 14,
-              color: isDark ? const Color(0xFFE5E5E5).withOpacity(0.6) : Colors.grey[500],
+              color: isDark
+                  ? const Color(0xFFE5E5E5).withOpacity(0.6)
+                  : Colors.grey[500],
             ),
           ),
         ],
