@@ -164,7 +164,7 @@ REST_FRAMEWORK = {
     ),
 }
 
-ALLOWED_HOSTS = [ 'codenebula-internal-round-25.onrender.com','127.0.0.1', 'localhost']
+ALLOWED_HOSTS = [ 'codenebula-internal-round-25.onrender.com','127.0.0.1', 'localhost', "192.168.0.107"]
 
 # Middleware adjustments for static files
 MIDDLEWARE += [

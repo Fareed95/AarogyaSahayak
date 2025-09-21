@@ -36,7 +36,6 @@ class _ChatBotScreenState
     >
   >
   messages = [];
-
   bool isLoading = false;
 
   Future<
@@ -61,6 +60,9 @@ class _ChatBotScreenState
 
     try {
       String? token = await _storageService.getJwtToken();
+      print(
+        "Retrieved JWT Token: $token",
+      );
       if (token ==
           null)
         throw Exception(
@@ -69,7 +71,7 @@ class _ChatBotScreenState
 
       final response = await http.post(
         Uri.parse(
-          "https://codenebula-internal-round-25.onrender.com/api/reports/chatbot",
+          "https://codenebula-internal-round-25.onrender.com/api/reports/chatbot/",
         ),
         headers: {
           "Content-Type": "application/json",
@@ -82,13 +84,21 @@ class _ChatBotScreenState
         ),
       );
 
+      // 🔹 DEBUG: print full response
+      print(
+        "Status Code: ${response.statusCode}",
+      );
+      print(
+        "Response Body: ${response.body}",
+      );
+
       if (response.statusCode ==
           200) {
         final data = jsonDecode(
           response.body,
         );
         String agentReply =
-            data['reply'] ??
+            data['response'] ??
             "No reply";
 
         setState(
@@ -102,12 +112,13 @@ class _ChatBotScreenState
           },
         );
       } else {
+        // Show full server error message
         setState(
           () {
             messages.add(
               {
                 "sender": "agent",
-                "text": "Error: ${response.statusCode}",
+                "text": "Error ${response.statusCode}: ${response.body}",
               },
             );
           },
@@ -198,11 +209,9 @@ class _ChatBotScreenState
                   (
                     context,
                     index,
-                  ) {
-                    return buildMessage(
-                      messages[index],
-                    );
-                  },
+                  ) => buildMessage(
+                    messages[index],
+                  ),
             ),
           ),
           if (isLoading)
