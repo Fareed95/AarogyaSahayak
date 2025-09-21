@@ -1,6 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 
 import '../component/QRGenerator.dart';
+import '../component/custom_snackbar.dart.dart';
+import '../services/info.dart';
+import '../services/secure_storage_service.dart';
+import 'package:http/http.dart' as http;
 
 class UserProfile {
   final int id;
@@ -161,7 +167,64 @@ class _ProfileScreenState extends State<profile_screen> {
     super.initState();
     _loadUserData();
   }
+  Future<void> _logout() async {
+    var jwt=await SecureStorageService().getJwtToken();
 
+    try {
+      // API endpoint
+      const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/authentication/logout';
+
+      // Prepare the request body
+
+      // Make POST request
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization':'$jwt',
+
+        },
+      );
+
+      // Handle response
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Success
+        final responseData = jsonDecode(response.body);
+        print("Logged out successfully");
+        // Show success message
+        AwesomeSnackbar.success(
+            context,
+            "Logged out successfully",
+            "Please login to get your details again"
+        );
+        Info().setLoggedIn(false);
+
+
+      } else {
+        // Error - show appropriate message
+        final errorData = jsonDecode(response.body);
+        print(errorData);
+
+        // Show error message based on API response
+        String errorMessage = "logout failed";
+        if (errorData.containsKey('message')) {
+          errorMessage = errorData['message'];
+        } else if (errorData.containsKey('error')) {
+          errorMessage = errorData['error'];
+        }
+
+        AwesomeSnackbar.error(context, "logout Failed", errorMessage);
+      }
+    } catch (error) {
+      // Network or other errors
+      print(error);
+      AwesomeSnackbar.error(
+          context,
+          "Network Error",
+          "Please check your internet connection and try again"
+      );
+    }
+  }
   void _loadUserData() {
     Future.delayed(const Duration(milliseconds: 800), () {
       setState(() {
@@ -270,6 +333,10 @@ class _ProfileScreenState extends State<profile_screen> {
             _buildMedicinesSection(),
             
             const SizedBox(height: 24),
+            ElevatedButton(onPressed: (){
+              _logout();
+            },child: Text("Logout"),)
+
           ],
         ),
       ),
