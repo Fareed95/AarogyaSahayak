@@ -11,12 +11,10 @@ load_dotenv()
 # ------------------------
 def authenticate_request(request, need_user=False):
     token = request.headers.get('Authorization')
-    print(token)
     if not need_user:
         return None
 
     if not token:
-        print("idhar hu")
         raise AuthenticationFailed('Unauthenticated!')
     try:
         payload = jwt.decode(token, 'secret', algorithms=["HS256"])
