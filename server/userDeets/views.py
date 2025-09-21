@@ -52,7 +52,7 @@ class UserDeetsViewSet(APIView):
 
 
 
-SERVICE_ACCOUNT_FILE = 'userDeets/hackathon-996b5-firebase-adminsdk-fbsvc-8fd9d7f423.json'
+SERVICE_ACCOUNT_FILE = 'userDeets/hackathon-996b5-fe243eb14d9f.json'
 SCOPES = ['https://www.googleapis.com/auth/firebase.messaging']
 
 def get_access_token():
@@ -64,14 +64,12 @@ def get_access_token():
 
 # Example usage
 
-
 class NotificationViewset(APIView):
-    
     def post(self, request):
         title = request.data.get('title', 'Notification')
         body = request.data.get('body', '')
 
-        # 1. Get all FCM tokens (non-null and non-empty)
+        # 1. Get all FCM tokens
         tokens = list(
             UserDeets.objects.filter(fcm_token__isnull=False)
                              .exclude(fcm_token="")
@@ -81,19 +79,22 @@ class NotificationViewset(APIView):
         if not tokens:
             return Response({"message": "No users with FCM token found."},
                             status=status.HTTP_400_BAD_REQUEST)
-        print(tokens)
-        # 2. Get OAuth2 access token
-        token = get_access_token()
-        print(token)
-        # 3. FCM HTTP v1 API endpoint
+
+        # 2. OAuth2 access token
+        try:
+            token = get_access_token()
+        except Exception as e:
+            return Response({"error": f"Access token error: {str(e)}"},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # 3. FCM endpoint
         url = "https://fcm.googleapis.com/v1/projects/hackathon-996b5/messages:send"
 
         headers = {
             "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json; UTF-8"
+            "Content-Type": "application/json; charset=UTF-8"
         }
 
-        # 4. Payload: for multiple devices, must send one message per token in v1 API
         results = []
         for fcm_token in tokens:
             payload = {
@@ -110,24 +111,22 @@ class NotificationViewset(APIView):
 
             try:
                 response = requests.post(url, headers=headers, json=payload)
-                try:
-                    results.append(response.json())
-                except requests.JSONDecodeError:
-                    results.append({
-                        "error": "Invalid JSON",
-                        "status_code": response.status_code,
-                        "text": response.text
-                    })
+                # Add full debug info
+                results.append({
+                    "token": fcm_token,
+                    "status_code": response.status_code,
+                    "response_text": response.text  # raw response
+                })
             except Exception as e:
-                results.append({"error": str(e)})
+                results.append({
+                    "token": fcm_token,
+                    "error": str(e)
+                })
 
         return Response({
-            "message": "Notification sent",
+            "message": "Notification attempt finished",
             "fcm_responses": results
         }, status=status.HTTP_200_OK)
-    
-
-
 
 
 class getMedicineViewset(APIView):
