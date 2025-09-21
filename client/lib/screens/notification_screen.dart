@@ -36,7 +36,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
       try {
         // Get JWT token for authentication
         String? jwtToken = await SecureStorageService().getJwtToken();
-
         if (jwtToken == null) {
           return;
         }
