@@ -474,6 +474,7 @@
 //     );
 //   }
 // }
+import 'package:client/widgets/community_home.dart';
 import 'package:flutter/material.dart';
 import '../widgets/custom_drawer.dart';
 import '../widgets/theme_switch.dart';
@@ -512,9 +513,9 @@ class _LayoutState extends State<Layout> {
   Widget build(BuildContext context) {
     final pages = [
       const HomeScreen(), // Widget
-      const CommunityApiService(),
+      const CommunityHome(),
       const Nutrition(), // Widget
-      const profile_screen(), // Widget (PascalCase)
+      const ProfileScreen(), // Widget (PascalCase)
     ];
 
     return Scaffold(
@@ -594,3 +595,4 @@ class _LayoutState extends State<Layout> {
     );
   }
 }
+

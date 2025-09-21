@@ -50,6 +50,8 @@ dependencies:
   record: ^6.0.0
   file_picker: ^8.0.6
   path: ^1.8.2
+
+  timezone: ^0.9.4
 dev_dependencies:
   flutter_test:
     sdk: flutter
