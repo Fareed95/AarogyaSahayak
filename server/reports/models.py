@@ -36,3 +36,11 @@ class ReportInstance(models.Model):   # 👈 plural hataya, singular rakha
 
     def __str__(self):
         return f"{self.instance_name} - {self.report.title}"
+
+
+class ChatBot(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chatbots')
+    memory = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return f"ChatBot - {self.user.username} - {self.report.title}"

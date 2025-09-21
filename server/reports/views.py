@@ -5,7 +5,10 @@ from rest_framework import status
 from django.core.files.storage import default_storage
 from utils.usercheck import authenticate_request
 import os
-
+from .models import Report, ChatBot
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+from langchain_openai import ChatOpenAI
+import json
 from .models import Report, ReportInstance
 from .agents.extracting_basic_details import extract_report_from_pdf, generate_report_summary as generate_basic_summary
 from .agents.extracting_json_details import extract_medical_from_pdf, generate_report_summary as generate_json_summary
@@ -88,3 +91,71 @@ class UploadReportView(APIView):
         finally:
             if os.path.exists(full_path):
                 os.remove(full_path)
+
+
+
+MAX_HISTORY = 10
+
+class UserChatBotAPIView(APIView):
+
+    def post(self, request):
+        user = authenticate_request(request, need_user=True)
+    
+        user_message = request.data.get("message", "").strip()
+        if not user_message:
+            return Response({"error": "Message is required"}, status=400)
+
+        # Merge user's report summaries as **background knowledge**
+        reports = Report.objects.filter(user=user)
+        merged_summary = " ".join([r.overall_summary or "" for r in reports])
+
+        # Get or create ChatBot instance
+        chatbot, _ = ChatBot.objects.get_or_create(user=user)
+
+        # Load existing memory
+        try:
+            history = json.loads(chatbot.memory) if chatbot.memory else []
+        except json.JSONDecodeError:
+            history = []
+
+        # Keep last 10 messages
+        history = history[-MAX_HISTORY:]
+
+        # Build messages for LangChain
+        messages = []
+
+        # System message: background context + instructions
+        system_prompt = (
+            f"You are a helpful personal health assistant. "
+            f"You have access to the user's health information (summarized) "
+            f"for context, but you must never reveal raw report details. "
+            f"Provide advice, suggestions, or answer questions about health, "
+            f"nutrition, and wellbeing in a friendly, personalized way. "
+            f"User's health summary (for reference only, do not show to user): {merged_summary}"
+        )
+        messages.append(SystemMessage(content=system_prompt))
+
+        # Append previous conversation history
+        for msg in history:
+            if msg["role"] == "human":
+                messages.append(HumanMessage(content=msg["content"]))
+            else:
+                messages.append(AIMessage(content=msg["content"]))
+
+        # Append current user message
+        messages.append(HumanMessage(content=user_message))
+
+        # Initialize LangChain chat
+        chat = ChatOpenAI(model="gpt-4")
+        ai_response = chat(messages)
+
+        # Append AI response to history
+        history.append({"role": "human", "content": user_message})
+        history.append({"role": "ai", "content": ai_response.content})
+        history = history[-MAX_HISTORY:]  # keep last 10 messages
+
+        # Save back to ChatBot memory
+        chatbot.memory = json.dumps(history)
+        chatbot.save()
+
+        return Response({"response": ai_response.content})
