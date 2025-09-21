@@ -1032,7 +1032,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final offers = [
       {
         'title': '24/7 AI Support',
-        'subtitle': 'Get instant medical guidance anytime',
+        'subtitle': 'Get instant health guidance',
         'icon': Icons.support_agent,
       },
       {
