@@ -633,12 +633,12 @@ class CommunityApiService {
       "joined_communities": [
         {
           "id": 1,
-          "name": "Flutter Developers",
+          "name": "Stand Against Acid Attacks",
           "member_count": 1250,
         },
         {
           "id": 4,
-          "name": "Mobile Development",
+          "name": "Stand againt Rape",
           "member_count": 950,
         },
       ],
