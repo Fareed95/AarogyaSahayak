@@ -6,6 +6,7 @@ import 'login_screen.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import '../screens/notification_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,6 +22,42 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late AnimationController _slideController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+
+  // Mock ASHA / community health worker data
+  final List<Map<String, dynamic>> _mockAshaWorkers = [
+    {
+      "id": 1,
+      "name": "ASHA Worker - Meera Patel",
+      "region": "Wadala",
+      "distance_km": 1.2,
+      "phone": "+91-98765-43210",
+      "available": true,
+    },
+    {
+      "id": 2,
+      "name": "ASHA Worker - Rekha Sharma",
+      "region": "Kurla",
+      "distance_km": 2.8,
+      "phone": "+91-91234-56789",
+      "available": true,
+    },
+    {
+      "id": 3,
+      "name": "ASHA Worker - S. Kumar",
+      "region": "Ghatkopar",
+      "distance_km": 4.6,
+      "phone": "+91-99887-66554",
+      "available": false,
+    },
+    {
+      "id": 4,
+      "name": "ASHA Worker - Anita Rao",
+      "region": "Andheri",
+      "distance_km": 6.0,
+      "phone": "+91-90123-45678",
+      "available": true,
+    },
+  ];
 
   @override
   void initState() {
@@ -119,6 +156,340 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     print("File upload initiated");
   }
 
+  void _showNearestAshaBottomSheet() {
+    String selectedRegion = "All";
+    List<Map<String, dynamic>> filtered = List.from(_mockAshaWorkers);
+    final TextEditingController searchController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setStateSB) {
+            void _filterResults() {
+              final query = searchController.text.trim().toLowerCase();
+              setStateSB(() {
+                filtered = _mockAshaWorkers.where((w) {
+                  final matchesRegion = selectedRegion == "All" || w['region'] == selectedRegion;
+                  final matchesQuery = query.isEmpty ||
+                      w['name'].toString().toLowerCase().contains(query) ||
+                      w['region'].toString().toLowerCase().contains(query);
+                  return matchesRegion && matchesQuery;
+                }).toList()
+                  ..sort((a, b) => (a['distance_km'] as double).compareTo(b['distance_km'] as double));
+              });
+            }
+
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 16,
+                right: 16,
+                top: 18,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          "Nearest ASHA / Regional Workers",
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.my_location_outlined),
+                        onPressed: () {
+                          // TODO: integrate geolocation (e.g. geolocator) and fetch actual nearest workers from backend
+                          Navigator.of(ctx).pop();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Use my location: (stub) — add geolocation integration.")),
+                          );
+                        },
+                        tooltip: "Use my location",
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Region filter + search
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: selectedRegion,
+                          items: <String>["All", "Wadala", "Kurla", "Ghatkopar", "Andheri"]
+                              .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                              .toList(),
+                          onChanged: (v) {
+                            selectedRegion = v ?? "All";
+                            _filterResults();
+                          },
+                          decoration: const InputDecoration(
+                            isDense: true,
+                            border: OutlineInputBorder(),
+                            labelText: "Region",
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        flex: 2,
+                        child: TextField(
+                          controller: searchController,
+                          onChanged: (val) => _filterResults(),
+                          decoration: const InputDecoration(
+                            isDense: true,
+                            border: OutlineInputBorder(),
+                            suffixIcon: Icon(Icons.search),
+                            labelText: "Search name or region",
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // ASHA Foundation Link
+                  GestureDetector(
+                    onTap: () async {
+                      final url = Uri.parse('https://nhm.gov.in/index1.php?lang=1&level=1&sublinkid=150&lid=226');
+                      if (await canLaunchUrl(url)) {
+                        await launchUrl(url);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Could not launch $url')),
+                        );
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.info_outline, color: Colors.blue, size: 16),
+                          const SizedBox(width: 8),
+                          Text(
+                            "Learn more about ASHA foundation",
+                            style: TextStyle(
+                              color: Colors.blue,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Results list
+                  ConstrainedBox(
+                    constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4), // Reduced height to prevent overflow
+                    child: filtered.isEmpty
+                        ? const Center(child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 20),
+                            child: Text("No workers found in this area."),
+                          ))
+                        : ListView.separated(
+                            shrinkWrap: true,
+                            itemCount: filtered.length,
+                            separatorBuilder: (_, __) => const Divider(),
+                            itemBuilder: (_, i) {
+                              final w = filtered[i];
+                              return ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor: w['available'] ? const Color(0xFFFCA311) : Colors.grey,
+                                  child: Text(w['name'].toString().split(' ').last[0]),
+                                ),
+                                title: Text(w['name']),
+                                subtitle: Text('${w['region']} • ${w['distance_km']} km'),
+                                trailing: Wrap(
+                                  spacing: 8,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.call),
+                                      onPressed: () {
+                                        Navigator.of(ctx).pop();
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text("Call ${w['phone']} (stub)")),
+                                        );
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.map_outlined),
+                                      onPressed: () {
+                                        Navigator.of(ctx).pop();
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text("Open map for ${w['name']} (stub)")),
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
+                                onTap: () {
+                                  // Show quick details
+                                  showDialog(
+                                    context: ctx,
+                                    builder: (dCtx) {
+                                      return AlertDialog(
+                                        title: Text(w['name']),
+                                        content: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text("Region: ${w['region']}"),
+                                            Text("Distance: ${w['distance_km']} km"),
+                                            Text("Phone: ${w['phone']}"),
+                                            const SizedBox(height: 8),
+                                            Text(w['available'] ? "Available now" : "Currently unavailable"),
+                                          ],
+                                        ),
+                                        actions: [
+                                          TextButton(onPressed: () => Navigator.pop(dCtx), child: const Text("Close")),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              Navigator.pop(dCtx);
+                                              Navigator.pop(ctx);
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(content: Text("Request sent to ${w['name']} (stub)")),
+                                              );
+                                            },
+                                            child: const Text("Request Visit"),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildNearestAshaSection(bool isDark) {
+    return InkWell(
+      onTap: _showNearestAshaBottomSheet,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              isDark ? const Color(0xFF0F1724).withOpacity(0.3) : Colors.white,
+              isDark ? const Color(0xFF0F1724).withOpacity(0.1) : const Color(0xFFF8F9FA),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark ? Colors.white.withOpacity(0.03) : const Color(0xFFEDEDED),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 62,
+              height: 62,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFCA311).withOpacity(0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.local_hospital_outlined, size: 34, color: Color(0xFFFCA311)),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Find Nearest ASHA / Regional Worker",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : const Color(0xFF14213D),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    "Locate nearby community health workers for home visits and local support.",
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDark ? Colors.white.withOpacity(0.8) : Colors.grey[700],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: () async {
+                      final url = Uri.parse('https://nhm.gov.in/index1.php?lang=1&level=1&sublinkid=150&lid=226');
+                      if (await canLaunchUrl(url)) {
+                        await launchUrl(url);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Could not launch $url')),
+                        );
+                      }
+                    },
+                    child: Text(
+                      "Learn more about ASHA foundation",
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton(
+              onPressed: _showNearestAshaBottomSheet,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFCA311),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text("Find"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
@@ -130,43 +501,52 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         opacity: _fadeAnimation,
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
-          child: Column(
-            children: [
-              // Aesthetic Banner
-              _buildTopBanner(isDark),
-              
-              SlideTransition(
-                position: _slideAnimation,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 24),
-                      
-                      // Upload Section
-                      _buildUploadSection(isDark),
-                      const SizedBox(height: 32),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.of(context).size.height,
+            ),
+            child: Column(
+              children: [
+                // Aesthetic Banner
+                _buildTopBanner(isDark),
+                
+                SlideTransition(
+                  position: _slideAnimation,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 24),
+                        
+                        // ASHA Worker Section - ADDED HERE
+                        _buildNearestAshaSection(isDark),
+                        const SizedBox(height: 32),
+                        
+                        // Upload Section
+                        _buildUploadSection(isDark),
+                        const SizedBox(height: 32),
 
-                      // Quick Access Section
-                      _buildQuickAccessSection(isDark),
-                      const SizedBox(height: 32),
+                        // Quick Access Section
+                        _buildQuickAccessSection(isDark),
+                        const SizedBox(height: 32),
 
-                      // Features & Offers Section
-                      _buildFeaturesSection(isDark),
-                      const SizedBox(height: 32),
+                        // Features & Offers Section
+                        _buildFeaturesSection(isDark),
+                        const SizedBox(height: 32),
 
-                      // Assurance Section
-                      _buildAssuranceSection(isDark),
-                      const SizedBox(height: 32),
+                        // Assurance Section
+                        _buildAssuranceSection(isDark),
+                        const SizedBox(height: 32),
 
-                      // Footer
-                      _buildFooter(isDark),
-                      const SizedBox(height: 20),
-                    ],
+                        // Footer
+                        _buildFooter(isDark),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
