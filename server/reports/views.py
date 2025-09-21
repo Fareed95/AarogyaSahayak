@@ -165,25 +165,37 @@ class UserChatBotAPIView(APIView):
         return Response({"response": ai_response.content})
     
 
-
 class UserReportInstancesView(APIView):
+
     def post(self, request):
+        """
+        POST: user ka email bhejo aur uske report instances return honge
+        """
         email = request.data.get("email")
-        user = None
+        if not email:
+            return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        if email:  
-            # Agar email diya ho to usse user fetch karo
-            try:
-                user = User.objects.get(email=email)
-            except User.DoesNotExist:
-                return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
-        else:
-            # Agar email nahi diya to request se authenticate karke user nikaalo
-            user = authenticate_request(request, need_user=True)
-            if not user:
-                return Response({"error": "Authentication failed"}, status=status.HTTP_401_UNAUTHORIZED)
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        # Get all report instances of this user
+        instances = ReportInstance.objects.filter(report__user=user)
+        serializer = ReportInstanceSerializer(instances, many=True)
+
+        return Response({
+            "email": user.email,
+            "report_instances": serializer.data
+        }, status=status.HTTP_200_OK)
+
+    def get(self, request):
+        """
+        GET: email ke bina, sirf authenticated user ke reports aayenge
+        """
+        user = authenticate_request(request, need_user=True)
+        if not user:
+            return Response({"error": "Authentication failed"}, status=status.HTTP_401_UNAUTHORIZED)
+
         instances = ReportInstance.objects.filter(report__user=user)
         serializer = ReportInstanceSerializer(instances, many=True)
 
