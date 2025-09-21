@@ -1,8 +1,9 @@
-import 'screens/login_screen.dart';
-import 'screens/voice_agent.dart';
 import 'package:flutter/material.dart';
 import 'theme/app_theme.dart';
 import 'layout.dart';
+import 'screens/login_screen.dart';
+import 'screens/voice_agent.dart';
+import 'screens/community_home.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
@@ -49,43 +50,43 @@ class _HackathonAppState extends State<HackathonApp> {
   }
 
   Future<void> _setFCM() async {
-    FirebaseMessaging messaging = FirebaseMessaging.instance;
-    String? token = await messaging.getToken();
-    var value = await Info().isLoggedIn();
-    print('User logged in? $value');
-    String? jwtToken = await SecureStorageService().getJwtToken();
+    try {
+      FirebaseMessaging messaging = FirebaseMessaging.instance;
+      String? token = await messaging.getToken();
+      var value = await Info().isLoggedIn();
+      print('User logged in? $value');
+      String? jwtToken = await SecureStorageService().getJwtToken();
 
-    if (jwtToken != null) {
-      try {
-        // API endpoint
-        const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/user/';
-        final Map<String, dynamic> requestBody = {'fcm_token': token};
+      if (jwtToken != null && token != null) {
+        try {
+          // API endpoint
+          const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/user/';
+          final Map<String, dynamic> requestBody = {'fcm_token': token};
 
+          final response = await http.patch(
+            Uri.parse(apiUrl),
+            headers: <String, String>{
+              'Content-Type': 'application/json; charset=UTF-8',
+              'Authorization': jwtToken
+            },
+            body: jsonEncode(requestBody),
+          );
 
-        final response = await http.patch(
-          Uri.parse(apiUrl),
-          headers: <String, String>{
-            'Content-Type': 'application/json; charset=UTF-8',
-            'Authorization': jwtToken
-          },
-          body: jsonEncode(requestBody),
-        );
-
-        if (response.statusCode == 200 || response.statusCode == 201) {
-          final responseData = jsonDecode(response.body);
-          print(responseData);
-
-
-          print("FCM token updated successfully: $responseData");
-        } else {
-          final errorData = jsonDecode(response.body);
-          print("Error updating FCM token: $errorData");
+          if (response.statusCode == 200 || response.statusCode == 201) {
+            final responseData = jsonDecode(response.body);
+            print("✅ FCM token updated successfully: $responseData");
+          } else {
+            final errorData = jsonDecode(response.body);
+            print("❌ Error updating FCM token: $errorData");
+          }
+        } catch (error) {
+          print("❌ Network or other error: $error");
         }
-      } catch (error) {
-        print("Network or other error: $error");
+      } else {
+        print('⚠️ No JWT token or FCM token found');
       }
-    } else {
-      print('No JWT token found');
+    } catch (e) {
+      print("❌ Error in _setFCM: $e");
     }
   }
 
@@ -101,7 +102,7 @@ class _HackathonAppState extends State<HackathonApp> {
 
       print('🔔 User granted permission: ${settings.authorizationStatus}');
       String? token = await messaging.getToken();
-      print('FCM Token: $token');
+      print('📱 FCM Token: $token');
     } catch (e) {
       print("❌ Error getting FCM token: $e");
     }
@@ -110,25 +111,17 @@ class _HackathonAppState extends State<HackathonApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'hackathon',
+      title: 'Hackathon',
       debugShowCheckedModeBanner: false,
       theme: isDarkMode ? AppTheme.darkTheme : AppTheme.lightTheme,
-      home: Scaffold(
-        body: Column(
-          children: [
-            Expanded(
-              child: Layout(
-                isDarkMode: isDarkMode,
-                onThemeToggle: () {
-                  setState(() {
-                    isDarkMode = !isDarkMode;
-                  });
-                },
-              ),
-            ),
-
-          ],
-        ),
+      // ✅ Fixed: Removed the unnecessary Scaffold wrapper
+      home: Layout(
+        isDarkMode: isDarkMode,
+        onThemeToggle: () {
+          setState(() {
+            isDarkMode = !isDarkMode;
+          });
+        },
       ),
     );
   }

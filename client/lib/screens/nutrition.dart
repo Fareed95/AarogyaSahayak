@@ -1,19 +1,6 @@
 import 'package:flutter/material.dart';
 
-class NutritionScreen extends StatelessWidget {
-  const NutritionScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Nutrition'),
-      ),
-      body: const Center(
-        child: Text('Nutrition Screen Content'),
-      ),
-    );
-  }
+// VideoData Model
 class VideoData {
   final String id;
   final String title;
@@ -56,6 +43,7 @@ class VideoData {
   }
 }
 
+// Mock Video Data
 List<VideoData> mockVideoData = [
   VideoData(
     id: '1',
@@ -113,6 +101,212 @@ List<VideoData> mockVideoData = [
   ),
 ];
 
+// VideoCard Widget
+class VideoCard extends StatelessWidget {
+  final VideoData videoData;
+  final VoidCallback onWatchPressed;
+
+  const VideoCard({
+    Key? key,
+    required this.videoData,
+    required this.onWatchPressed,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Video thumbnail with play button
+          Container(
+            height: 180,
+            decoration: const BoxDecoration(
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
+            ),
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
+              child: _buildVideoThumbnail(),
+            ),
+          ),
+
+          // Video info
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Category badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2E7D8F).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    videoData.category,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF2E7D8F),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                // Video title
+                Text(
+                  videoData.title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF2E7D8F),
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+                const SizedBox(height: 6),
+
+                // Video description
+                Text(
+                  videoData.description,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                    height: 1.4,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+                const SizedBox(height: 8),
+
+                // Duration and action row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Duration
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.access_time,
+                          size: 14,
+                          color: Colors.grey[500],
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          videoData.duration,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Watch button
+                    GestureDetector(
+                      onTap: onWatchPressed,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2E7D8F),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.play_arrow,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'Watch',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Build video thumbnail with play button overlay
+  Widget _buildVideoThumbnail() {
+    return Stack(
+      children: [
+        // Thumbnail placeholder
+        Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFF2E7D8F).withOpacity(0.8),
+                const Color(0xFF4A9FB8).withOpacity(0.6),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.play_circle_filled,
+                  size: 50,
+                  color: Colors.white,
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Watch Video',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// Nutrition Screen
 class Nutrition extends StatefulWidget {
   const Nutrition({super.key});
 
@@ -122,18 +316,18 @@ class Nutrition extends StatefulWidget {
 
 class _NutritionState extends State<Nutrition> {
   bool isReadMoreExpanded = false;
-  
+
   List<VideoData> displayedVideos = [];
   int currentVideoIndex = 0;
   final int videosPerLoad = 2;
-  
+
   final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _loadMoreVideos();
-    
+
     _scrollController.addListener(_scrollListener);
   }
 
@@ -144,7 +338,7 @@ class _NutritionState extends State<Nutrition> {
   }
 
   void _scrollListener() {
-    if (_scrollController.position.pixels >= 
+    if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       _loadMoreVideos();
     }
@@ -166,11 +360,195 @@ class _NutritionState extends State<Nutrition> {
     });
   }
 
+  void _showVideoModal(VideoData videoData) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.9,
+        builder: (context, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            children: [
+              // Modal handle
+              Container(
+                margin: const EdgeInsets.only(top: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+
+              // Modal content
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Video thumbnail
+                      Container(
+                        height: 200,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              const Color(0xFF2E7D8F).withOpacity(0.8),
+                              const Color(0xFF4A9FB8).withOpacity(0.6),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.play_circle_filled,
+                            size: 60,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Video title
+                      Text(
+                        videoData.title,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2E7D8F),
+                        ),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // Category and duration
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2E7D8F).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              videoData.category,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF2E7D8F),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Icon(
+                            Icons.access_time,
+                            size: 16,
+                            color: Colors.grey[500],
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            videoData.duration,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Description
+                      const Text(
+                        'About this video:',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF2E7D8F),
+                        ),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      Text(
+                        videoData.description,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[700],
+                          height: 1.5,
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Video URL info
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Video Link:',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              videoData.youtubeUrl,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Copy this link to watch the video in your browser or YouTube app.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFA),
-      
+
       body: SingleChildScrollView(
         controller: _scrollController,
         padding: const EdgeInsets.all(16.0),
@@ -178,17 +556,17 @@ class _NutritionState extends State<Nutrition> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildHeaderSection(),
-            
+
             const SizedBox(height: 24),
-            
+
             _buildVideoGrid(),
-            
+
             const SizedBox(height: 32),
-            
+
             _buildContentSection(),
-            
+
             const SizedBox(height: 24),
-            
+
             if (currentVideoIndex < mockVideoData.length)
               _buildLoadingIndicator(),
           ],
@@ -254,7 +632,7 @@ class _NutritionState extends State<Nutrition> {
           ),
         ),
         const SizedBox(height: 16),
-        
+
         // Grid of videos - displays two videos per row
         ListView.separated(
           shrinkWrap: true,
@@ -265,19 +643,25 @@ class _NutritionState extends State<Nutrition> {
             final startIndex = index * 2;
             final endIndex = (startIndex + 2).clamp(0, displayedVideos.length);
             final rowVideos = displayedVideos.sublist(startIndex, endIndex);
-            
+
             return Row(
               children: [
                 // First video in row
                 Expanded(
-                  child: VideoCard(videoData: rowVideos[0]),
+                  child: VideoCard(
+                    videoData: rowVideos[0],
+                    onWatchPressed: () => _showVideoModal(rowVideos[0]),
+                  ),
                 ),
-                
+
                 // Second video in row (if exists)
                 if (rowVideos.length > 1) ...[
                   const SizedBox(width: 12),
                   Expanded(
-                    child: VideoCard(videoData: rowVideos[1]),
+                    child: VideoCard(
+                      videoData: rowVideos[1],
+                      onWatchPressed: () => _showVideoModal(rowVideos[1]),
+                    ),
                   ),
                 ],
               ],
@@ -293,7 +677,7 @@ class _NutritionState extends State<Nutrition> {
     const String shortText = "NutriScan helps you make informed decisions about your nutrition. "
         "Our comprehensive database provides detailed nutritional information "
         "to support your health journey.";
-    
+
     const String fullText = "$shortText\n\n"
         "With advanced scanning technology, you can quickly analyze food products, "
         "understand ingredient lists, and track your nutritional intake. Our expert "
@@ -303,7 +687,6 @@ class _NutritionState extends State<Nutrition> {
         "personalized recommendations, and integration with your health goals. "
         "Whether you're managing a specific dietary requirement or simply want "
         "to eat more mindfully, NutriScan provides the tools you need.";
-
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -329,7 +712,7 @@ class _NutritionState extends State<Nutrition> {
             ),
           ),
           const SizedBox(height: 12),
-          
+
           // Content text
           Text(
             isReadMoreExpanded ? fullText : shortText,
@@ -339,9 +722,9 @@ class _NutritionState extends State<Nutrition> {
               height: 1.6,
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Read more button
           GestureDetector(
             onTap: _toggleReadMore,
@@ -366,8 +749,8 @@ class _NutritionState extends State<Nutrition> {
                   ),
                   const SizedBox(width: 4),
                   Icon(
-                    isReadMoreExpanded 
-                        ? Icons.keyboard_arrow_up 
+                    isReadMoreExpanded
+                        ? Icons.keyboard_arrow_up
                         : Icons.keyboard_arrow_down,
                     color: const Color(0xFF2E7D8F),
                     size: 18,
@@ -412,394 +795,4 @@ class _NutritionState extends State<Nutrition> {
       ),
     );
   }
-}
-
-// Reusable Video Card Component
-class VideoCard extends StatelessWidget {
-  final VideoData videoData;
-
-  const VideoCard({
-    Key? key,
-    required this.videoData,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Video thumbnail with play button
-          Container(
-            height: 180,
-            decoration: BoxDecoration(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
-              ),
-              color: Colors.grey[100],
-            ),
-            child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
-              ),
-              child: _buildVideoThumbnail(),
-            ),
-          ),
-          
-          // Video info
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Category badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2E7D8F).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    videoData.category,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF2E7D8F),
-                    ),
-                  ),
-                ),
-                
-                const SizedBox(height: 8),
-                
-                // Video title
-                Text(
-                  videoData.title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF2E7D8F),
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                
-                const SizedBox(height: 6),
-                
-                // Video description
-                Text(
-                  videoData.description,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                    height: 1.4,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                
-                const SizedBox(height: 8),
-                
-                // Duration and action row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Duration
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.access_time,
-                          size: 14,
-                          color: Colors.grey[500],
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          videoData.duration,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[500],
-                          ),
-                        ),
-                      ],
-                    ),
-                    
-                    // Watch button
-                    GestureDetector(
-                      onTap: () => _showVideoModal(context),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2E7D8F),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.play_arrow,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 4),
-                            const Text(
-                              'Watch',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Build video thumbnail with play button overlay
-  Widget _buildVideoThumbnail() {
-    return Stack(
-      children: [
-        // Thumbnail placeholder (since we can't load external images without packages)
-        Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                const Color(0xFF2E7D8F).withOpacity(0.8),
-                const Color(0xFF4A9FB8).withOpacity(0.6),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.play_circle_filled,
-                  size: 50,
-                  color: Colors.white,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  videoData.category,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // Show video details modal
-  void _showVideoModal(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
-        maxChildSize: 0.9,
-        builder: (context, scrollController) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(20),
-            ),
-          ),
-          child: Column(
-            children: [
-              // Modal handle
-              Container(
-                margin: const EdgeInsets.only(top: 8),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              
-              // Modal content
-              Expanded(
-                child: SingleChildScrollView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Video thumbnail
-                      Container(
-                        height: 200,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              const Color(0xFF2E7D8F).withOpacity(0.8),
-                              const Color(0xFF4A9FB8).withOpacity(0.6),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Center(
-                          child: Icon(
-                            Icons.play_circle_filled,
-                            size: 60,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 16),
-                      
-                      // Video title
-                      Text(
-                        videoData.title,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF2E7D8F),
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 8),
-                      
-                      // Category and duration
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF2E7D8F).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              videoData.category,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: const Color(0xFF2E7D8F),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Icon(
-                            Icons.access_time,
-                            size: 16,
-                            color: Colors.grey[500],
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            videoData.duration,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[500],
-                            ),
-                          ),
-                        ],
-                      ),
-                      
-                      const SizedBox(height: 16),
-                      
-                      // Description
-                      Text(
-                        'About this video:',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF2E7D8F),
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 8),
-                      
-                      Text(
-                        videoData.description,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[700],
-                          height: 1.5,
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 20),
-                      
-                      // Video URL info
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Video Link:',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              videoData.youtubeUrl,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Copy this link to watch the video in your browser or YouTube app.',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 20),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
->>>>>>> da432e39a4fd007c1b35cd606b4c40fd89ad3034
 }

@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 import '../services/secure_storage_service.dart';
 
 class CommunityApiService {
+  // TODO: Replace with your actual API URL
   static const String baseUrl = 'https://your-api-domain.com/api/community';
   static const String frontendSecret = 'YOUR_FRONTEND_SECRET';
 
@@ -26,21 +28,101 @@ class CommunityApiService {
     };
   }
 
-  // ==================== COMMUNITIES ====================
-
-  // Get all communities
-  static Future<List<dynamic>> getCommunities() async {
+  // Debug helper to check API connectivity
+  static Future<void> debugApiConnection() async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/communities/'),
-        headers: await headers,
-      );
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Failed to load communities: ${response.statusCode}');
+      if (kDebugMode) {
+        print('🔍 Debugging API Connection...');
+        print('📡 Base URL: $baseUrl');
+        
+        final jwtToken = await SecureStorageService().getJwtToken();
+        print('🔑 JWT Token: ${jwtToken != null ? 'Available' : 'Missing'}');
+        print('🔒 Frontend Secret: ${frontendSecret.isNotEmpty ? 'Set' : 'Missing'}');
       }
     } catch (e) {
+      if (kDebugMode) {
+        print('❌ Debug Error: $e');
+      }
+    }
+  }
+
+  // Enhanced error handling for API responses
+  static void _handleApiError(http.Response response, String endpoint) {
+    if (kDebugMode) {
+      print('❌ API Error for $endpoint:');
+      print('Status Code: ${response.statusCode}');
+      print('Response Headers: ${response.headers}');
+      print('Response Body: ${response.body.substring(0, response.body.length.clamp(0, 500))}...');
+    }
+  }
+
+  // ==================== COMMUNITIES ====================
+
+  // Get all communities with enhanced error handling
+  static Future<List<dynamic>> getCommunities() async {
+    try {
+      await debugApiConnection();
+      
+      final url = '$baseUrl/communities/';
+      if (kDebugMode) {
+        print('🌐 Making request to: $url');
+      }
+      
+      final response = await http.get(
+        Uri.parse(url),
+        headers: await headers,
+      );
+      
+      if (kDebugMode) {
+        print('📨 Response Status: ${response.statusCode}');
+        print('📨 Response Headers: ${response.headers}');
+      }
+      
+      if (response.statusCode == 200) {
+        // Check if response is actually JSON
+        final contentType = response.headers['content-type'];
+        if (contentType != null && !contentType.contains('application/json')) {
+          throw Exception('API returned non-JSON response. Content-Type: $contentType');
+        }
+        
+        try {
+          final decoded = json.decode(response.body);
+          if (kDebugMode) {
+            print('✅ Successfully parsed JSON response');
+          }
+          return decoded is List ? decoded : [decoded];
+        } catch (jsonError) {
+          if (kDebugMode) {
+            print('❌ JSON Decode Error: $jsonError');
+            print('Raw Response: ${response.body}');
+          }
+          throw Exception('Invalid JSON response: $jsonError');
+        }
+      } else {
+        _handleApiError(response, 'getCommunities');
+        
+        // Handle specific error codes
+        switch (response.statusCode) {
+          case 401:
+            throw Exception('Authentication failed. Please login again.');
+          case 403:
+            throw Exception('Access denied. Check your permissions.');
+          case 404:
+            throw Exception('Communities endpoint not found. Check API URL.');
+          case 500:
+            throw Exception('Server error. Please try again later.');
+          default:
+            throw Exception('Failed to load communities: HTTP ${response.statusCode}');
+        }
+      }
+    } on SocketException {
+      throw Exception('Network error. Please check your internet connection.');
+    } on http.ClientException catch (e) {
+      throw Exception('Request failed: $e');
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Unexpected error in getCommunities: $e');
+      }
       throw Exception('Failed to load communities: $e');
     }
   }
@@ -48,13 +130,20 @@ class CommunityApiService {
   // Get specific community details
   static Future<Map<String, dynamic>> getCommunityDetail(int communityId) async {
     try {
+      final url = '$baseUrl/communities/$communityId/';
       final response = await http.get(
-        Uri.parse('$baseUrl/communities/$communityId/'),
+        Uri.parse(url),
         headers: await headers,
       );
+      
       if (response.statusCode == 200) {
+        final contentType = response.headers['content-type'];
+        if (contentType != null && !contentType.contains('application/json')) {
+          throw Exception('API returned non-JSON response');
+        }
         return json.decode(response.body);
       } else {
+        _handleApiError(response, 'getCommunityDetail');
         throw Exception('Failed to load community details: ${response.statusCode}');
       }
     } catch (e) {
@@ -91,6 +180,7 @@ class CommunityApiService {
       if (response.statusCode == 201) {
         return json.decode(response.body);
       } else {
+        _handleApiError(response, 'createCommunity');
         throw Exception('Failed to create community: ${response.statusCode}');
       }
     } catch (e) {
@@ -98,49 +188,29 @@ class CommunityApiService {
     }
   }
 
-  // Update community
-  static Future<Map<String, dynamic>> updateCommunity(int communityId, Map<String, dynamic> data) async {
-    try {
-      final response = await http.put(
-        Uri.parse('$baseUrl/communities/$communityId/'),
-        headers: await headers,
-        body: json.encode(data),
-      );
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Failed to update community: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to update community: $e');
-    }
-  }
-
-  // Delete community
-  static Future<bool> deleteCommunity(int communityId) async {
-    try {
-      final response = await http.delete(
-        Uri.parse('$baseUrl/communities/$communityId/'),
-        headers: await headers,
-      );
-      return response.statusCode == 204;
-    } catch (e) {
-      throw Exception('Failed to delete community: $e');
-    }
-  }
-
-  // ==================== POSTS ====================
-
-  // Get all posts
+  // Get all posts with enhanced error handling
   static Future<List<dynamic>> getPosts() async {
     try {
+      final url = '$baseUrl/posts/';
       final response = await http.get(
-        Uri.parse('$baseUrl/posts/'),
+        Uri.parse(url),
         headers: await headers,
       );
+      
       if (response.statusCode == 200) {
-        return json.decode(response.body);
+        final contentType = response.headers['content-type'];
+        if (contentType != null && !contentType.contains('application/json')) {
+          throw Exception('API returned non-JSON response');
+        }
+        
+        try {
+          final decoded = json.decode(response.body);
+          return decoded is List ? decoded : [decoded];
+        } catch (jsonError) {
+          throw Exception('Invalid JSON response: $jsonError');
+        }
       } else {
+        _handleApiError(response, 'getPosts');
         throw Exception('Failed to load posts: ${response.statusCode}');
       }
     } catch (e) {
@@ -148,129 +218,23 @@ class CommunityApiService {
     }
   }
 
-  // Get specific post
-  static Future<Map<String, dynamic>> getPost(int postId) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/posts/$postId/'),
-        headers: await headers,
-      );
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Failed to load post: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to load post: $e');
-    }
-  }
-
-  // Create new post
-  static Future<Map<String, dynamic>> createPost({
-    required String title,
-    required String content,
-    required int communityId,
-    List<File>? files,
-  }) async {
-    try {
-      var request = http.MultipartRequest(
-        'POST',
-        Uri.parse('$baseUrl/posts/'),
-      );
-      
-      request.headers.addAll(await multipartHeaders);
-      request.fields['title'] = title;
-      request.fields['content'] = content;
-      request.fields['community'] = communityId.toString();
-      
-      if (files != null) {
-        for (File file in files) {
-          request.files.add(await http.MultipartFile.fromPath(
-            'files',
-            file.path,
-          ));
-        }
-      }
-
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
-      
-      if (response.statusCode == 201) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Failed to create post: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to create post: $e');
-    }
-  }
-
-  // Update post
-  static Future<Map<String, dynamic>> updatePost(int postId, Map<String, dynamic> data) async {
-    try {
-      final response = await http.put(
-        Uri.parse('$baseUrl/posts/$postId/'),
-        headers: await headers,
-        body: json.encode(data),
-      );
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Failed to update post: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to update post: $e');
-    }
-  }
-
-  // Delete post
-  static Future<bool> deletePost(int postId) async {
-    try {
-      final response = await http.delete(
-        Uri.parse('$baseUrl/posts/$postId/'),
-        headers: await headers,
-      );
-      return response.statusCode == 204;
-    } catch (e) {
-      throw Exception('Failed to delete post: $e');
-    }
-  }
-
-  // ==================== ROLE MANAGEMENT ====================
-
-  // Assign or update role in community
-  static Future<Map<String, dynamic>> assignRole(int communityId, int userId, String role) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/communities/$communityId/roles/'),
-        headers: await headers,
-        body: json.encode({
-          'user_id': userId,
-          'role': role,
-        }),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Failed to assign role: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to assign role: $e');
-    }
-  }
-
-  // ==================== USER ACTIVITY ====================
-
-  // Get user activity overview
+  // Get user activity with enhanced error handling
   static Future<Map<String, dynamic>> getUserActivity() async {
     try {
+      final url = '$baseUrl/users/activity/';
       final response = await http.get(
-        Uri.parse('$baseUrl/users/activity/'),
+        Uri.parse(url),
         headers: await headers,
       );
+      
       if (response.statusCode == 200) {
+        final contentType = response.headers['content-type'];
+        if (contentType != null && !contentType.contains('application/json')) {
+          throw Exception('API returned non-JSON response');
+        }
         return json.decode(response.body);
       } else {
+        _handleApiError(response, 'getUserActivity');
         throw Exception('Failed to load user activity: ${response.statusCode}');
       }
     } catch (e) {
@@ -278,424 +242,65 @@ class CommunityApiService {
     }
   }
 
-  // ==================== FILES ====================
+  // Mock data for testing when API is not available
+  static List<dynamic> getMockCommunities() {
+    return [
+      {
+        "id": 1,
+        "name": "Flutter Developers",
+        "description": "Community for Flutter enthusiasts",
+        "created_at": "2025-01-20T00:00:00Z",
+        "total_members_count": 150,
+        "user_role": "member",
+        "profile_picture": null
+      },
+      {
+        "id": 2,
+        "name": "Health & Wellness",
+        "description": "Share your health journey",
+        "created_at": "2025-01-19T00:00:00Z",
+        "total_members_count": 89,
+        "user_role": "admin",
+        "profile_picture": null
+      },
+    ];
+  }
 
-  // Upload file for a post
-  static Future<Map<String, dynamic>> uploadFile(int postId, File file) async {
-    try {
-      var request = http.MultipartRequest(
-        'POST',
-        Uri.parse('$baseUrl/files/'),
-      );
-      
-      request.headers.addAll(await multipartHeaders);
-      request.fields['post'] = postId.toString();
-      request.files.add(await http.MultipartFile.fromPath('file', file.path));
-
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
-      
-      if (response.statusCode == 201) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Failed to upload file: ${response.statusCode}');
+  static List<dynamic> getMockPosts() {
+    return [
+      {
+        "id": 1,
+        "title": "Welcome to our community!",
+        "content": "This is a sample post to test the functionality.",
+        "created_at": "2025-01-20T12:00:00Z",
+        "updated_at": "2025-01-20T12:00:00Z",
+        "votes_like_count": 5,
+        "votes_dislike_count": 0,
+        "saved_count": 2,
+        "community_name": "Flutter Developers",
+        "files": [],
+        "user_vote": null,
+        "user_saved": false,
+        "user_comments": []
       }
-    } catch (e) {
-      throw Exception('Failed to upload file: $e');
-    }
+    ];
   }
 
-  // Get all files
-  static Future<List<dynamic>> getFiles() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/files/'),
-        headers: await headers,
-      );
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Failed to load files: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to load files: $e');
-    }
-  }
-
-  // ==================== VOTES ON POSTS ====================
-
-  // Add vote to post
-  static Future<Map<String, dynamic>> votePost(int postId, int value) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/votes/'),
-        headers: await headers,
-        body: json.encode({
-          'post': postId,
-          'value': value, // 1 for upvote, -1 for downvote
-        }),
-      );
-      if (response.statusCode == 201) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Failed to vote on post: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to vote on post: $e');
-    }
-  }
-
-  // Update vote on post
-  static Future<Map<String, dynamic>> updateVotePost(int voteId, int value) async {
-    try {
-      final response = await http.put(
-        Uri.parse('$baseUrl/votes/$voteId/'),
-        headers: await headers,
-        body: json.encode({'value': value}),
-      );
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Failed to update vote: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to update vote: $e');
-    }
-  }
-
-  // Remove vote from post
-  static Future<bool> removeVotePost(int voteId) async {
-    try {
-      final response = await http.delete(
-        Uri.parse('$baseUrl/votes/$voteId/'),
-        headers: await headers,
-      );
-      return response.statusCode == 204;
-    } catch (e) {
-      throw Exception('Failed to remove vote: $e');
-    }
-  }
-
-  // ==================== COMMENTS ====================
-
-  // Add comment to post
-  static Future<Map<String, dynamic>> addComment(int postId, String content, {int? tagUserId}) async {
-    try {
-      final body = {
-        'post': postId,
-        'content': content,
-      };
-      if (tagUserId != null) body['tag'] = tagUserId;
-
-      final response = await http.post(
-        Uri.parse('$baseUrl/comments/'),
-        headers: await headers,
-        body: json.encode(body),
-      );
-      if (response.statusCode == 201) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Failed to add comment: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to add comment: $e');
-    }
-  }
-
-  // Get all comments
-  static Future<List<dynamic>> getComments() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/comments/'),
-        headers: await headers,
-      );
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Failed to load comments: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to load comments: $e');
-    }
-  }
-
-  // Delete comment
-  static Future<bool> deleteComment(int commentId) async {
-    try {
-      final response = await http.delete(
-        Uri.parse('$baseUrl/comments/$commentId/'),
-        headers: await headers,
-      );
-      return response.statusCode == 204;
-    } catch (e) {
-      throw Exception('Failed to delete comment: $e');
-    }
-  }
-
-  // ==================== REPLIES ====================
-
-  // Add reply to comment
-  static Future<Map<String, dynamic>> addReply(int commentId, String content, {int? tagUserId}) async {
-    try {
-      final body = {
-        'comment': commentId,
-        'content': content,
-      };
-      if (tagUserId != null) body['tag'] = tagUserId;
-
-      final response = await http.post(
-        Uri.parse('$baseUrl/replies/'),
-        headers: await headers,
-        body: json.encode(body),
-      );
-      if (response.statusCode == 201) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Failed to add reply: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to add reply: $e');
-    }
-  }
-
-  // Get all replies
-  static Future<List<dynamic>> getReplies() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/replies/'),
-        headers: await headers,
-      );
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Failed to load replies: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to load replies: $e');
-    }
-  }
-
-  // Delete reply
-  static Future<bool> deleteReply(int replyId) async {
-    try {
-      final response = await http.delete(
-        Uri.parse('$baseUrl/replies/$replyId/'),
-        headers: await headers,
-      );
-      return response.statusCode == 204;
-    } catch (e) {
-      throw Exception('Failed to delete reply: $e');
-    }
-  }
-
-  // ==================== COMMENT VOTES ====================
-
-  // Vote on comment
-  static Future<Map<String, dynamic>> voteComment(int commentId, int value) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/comment-votes/'),
-        headers: await headers,
-        body: json.encode({
-          'comment': commentId,
-          'value': value,
-        }),
-      );
-      if (response.statusCode == 201) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Failed to vote on comment: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to vote on comment: $e');
-    }
-  }
-
-  // Update comment vote
-  static Future<Map<String, dynamic>> updateCommentVote(int voteId, int value) async {
-    try {
-      final response = await http.put(
-        Uri.parse('$baseUrl/comment-votes/$voteId/'),
-        headers: await headers,
-        body: json.encode({'value': value}),
-      );
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Failed to update comment vote: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to update comment vote: $e');
-    }
-  }
-
-  // Remove comment vote
-  static Future<bool> removeCommentVote(int voteId) async {
-    try {
-      final response = await http.delete(
-        Uri.parse('$baseUrl/comment-votes/$voteId/'),
-        headers: await headers,
-      );
-      return response.statusCode == 204;
-    } catch (e) {
-      throw Exception('Failed to remove comment vote: $e');
-    }
-  }
-
-  // ==================== COMMENT REPLY VOTES ====================
-
-  // Vote on reply
-  static Future<Map<String, dynamic>> voteReply(int replyId, int value) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/comment-reply-votes/'),
-        headers: await headers,
-        body: json.encode({
-          'reply': replyId,
-          'value': value,
-        }),
-      );
-      if (response.statusCode == 201) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Failed to vote on reply: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to vote on reply: $e');
-    }
-  }
-
-  // Update reply vote
-  static Future<Map<String, dynamic>> updateReplyVote(int voteId, int value) async {
-    try {
-      final response = await http.put(
-        Uri.parse('$baseUrl/comment-reply-votes/$voteId/'),
-        headers: await headers,
-        body: json.encode({'value': value}),
-      );
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Failed to update reply vote: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to update reply vote: $e');
-    }
-  }
-
-  // Remove reply vote
-  static Future<bool> removeReplyVote(int voteId) async {
-    try {
-      final response = await http.delete(
-        Uri.parse('$baseUrl/comment-reply-votes/$voteId/'),
-        headers: await headers,
-      );
-      return response.statusCode == 204;
-    } catch (e) {
-      throw Exception('Failed to remove reply vote: $e');
-    }
-  }
-
-  // ==================== SAVED POSTS ====================
-
-  // Save post
-  static Future<Map<String, dynamic>> savePost(int postId) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/saved-posts/'),
-        headers: await headers,
-        body: json.encode({'post': postId}),
-      );
-      if (response.statusCode == 201) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Failed to save post: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to save post: $e');
-    }
-  }
-
-  // Get saved posts
-  static Future<List<dynamic>> getSavedPosts() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/saved-posts/'),
-        headers: await headers,
-      );
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Failed to load saved posts: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to load saved posts: $e');
-    }
-  }
-
-  // Unsave post
-  static Future<bool> unsavePost(int savedPostId) async {
-    try {
-      final response = await http.delete(
-        Uri.parse('$baseUrl/saved-posts/$savedPostId/'),
-        headers: await headers,
-      );
-      return response.statusCode == 204;
-    } catch (e) {
-      throw Exception('Failed to unsave post: $e');
-    }
-  }
-
-  // ==================== COMMUNITY USERS ====================
-
-  // Join community
-  static Future<Map<String, dynamic>> joinCommunity(int communityId, {String role = 'member'}) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/community-users/'),
-        headers: await headers,
-        body: json.encode({
-          'community': communityId,
-          'role': role,
-        }),
-      );
-      if (response.statusCode == 201) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Failed to join community: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to join community: $e');
-    }
-  }
-
-  // Leave community
-  static Future<bool> leaveCommunity(int membershipId) async {
-    try {
-      final response = await http.delete(
-        Uri.parse('$baseUrl/community-users/$membershipId/'),
-        headers: await headers,
-      );
-      return response.statusCode == 204;
-    } catch (e) {
-      throw Exception('Failed to leave community: $e');
-    }
-  }
-
-  // Get community memberships
-  static Future<List<dynamic>> getCommunityMemberships() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/community-users/'),
-        headers: await headers,
-      );
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Failed to load community memberships: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Failed to load community memberships: $e');
-    }
+  static Map<String, dynamic> getMockUserActivity() {
+    return {
+      "user_id": 1,
+      "email": "user@example.com",
+      "communities": [
+        {
+          "community_id": 1,
+          "community_name": "Flutter Developers",
+          "role": "member",
+          "user_posts_count": 3,
+          "liked_posts_count": 5,
+          "disliked_posts_count": 0,
+          "saved_posts_count": 2,
+        }
+      ]
+    };
   }
 }
