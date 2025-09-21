@@ -6,6 +6,7 @@ import '../component/QRGenerator.dart';
 import '../component/custom_snackbar.dart.dart';
 import '../services/info.dart';
 import '../services/secure_storage_service.dart';
+import '../screens/login_screen.dart';
 import 'package:http/http.dart' as http;
 
 class UserProfile {
@@ -16,7 +17,10 @@ class UserProfile {
   final String aadharNumber;
   final bool isDoctor;
   final bool isMedicalStore;
-  final List<Medicine> medicines;
+  final List<
+    Medicine
+  >
+  medicines;
 
   UserProfile({
     required this.id,
@@ -29,7 +33,13 @@ class UserProfile {
     required this.medicines,
   });
 
-  factory UserProfile.fromJson(Map<String, dynamic> json) {
+  factory UserProfile.fromJson(
+    Map<
+      String,
+      dynamic
+    >
+    json,
+  ) {
     return UserProfile(
       id: json['id'],
       name: json['name'],
@@ -38,9 +48,17 @@ class UserProfile {
       aadharNumber: json['aadhar_number'],
       isDoctor: json['is_doctor'],
       isMedicalStore: json['is_medical_store'],
-      medicines: (json['medicines'] as List)
-          .map((medicine) => Medicine.fromJson(medicine))
-          .toList(),
+      medicines:
+          (json['medicines']
+                  as List)
+              .map(
+                (
+                  medicine,
+                ) => Medicine.fromJson(
+                  medicine,
+                ),
+              )
+              .toList(),
     );
   }
 }
@@ -51,7 +69,10 @@ class Medicine {
   final String description;
   final String manufacturer;
   final String expiryDate;
-  final List<Dose> doses;
+  final List<
+    Dose
+  >
+  doses;
 
   Medicine({
     required this.id,
@@ -62,16 +83,30 @@ class Medicine {
     required this.doses,
   });
 
-  factory Medicine.fromJson(Map<String, dynamic> json) {
+  factory Medicine.fromJson(
+    Map<
+      String,
+      dynamic
+    >
+    json,
+  ) {
     return Medicine(
       id: json['id'],
       name: json['name'],
       description: json['description'],
       manufacturer: json['manufacturer'],
       expiryDate: json['expiry_date'],
-      doses: (json['doses'] as List)
-          .map((dose) => Dose.fromJson(dose))
-          .toList(),
+      doses:
+          (json['doses']
+                  as List)
+              .map(
+                (
+                  dose,
+                ) => Dose.fromJson(
+                  dose,
+                ),
+              )
+              .toList(),
     );
   }
 }
@@ -87,7 +122,13 @@ class Dose {
     required this.doseTime,
   });
 
-  factory Dose.fromJson(Map<String, dynamic> json) {
+  factory Dose.fromJson(
+    Map<
+      String,
+      dynamic
+    >
+    json,
+  ) {
     return Dose(
       doseName: json['dose_name'],
       description: json['description'],
@@ -96,7 +137,11 @@ class Dose {
   }
 }
 
-final Map<String, dynamic> mockUserData = {
+final Map<
+  String,
+  dynamic
+>
+mockUserData = {
   "id": 13,
   "name": "rehbar",
   "email": "rehbar@eng.rizvi.edu.in",
@@ -115,14 +160,14 @@ final Map<String, dynamic> mockUserData = {
         {
           "dose_name": "Morning",
           "description": "After breakfast",
-          "dose_time": "08:00:00"
+          "dose_time": "08:00:00",
         },
         {
           "dose_name": "Evening",
           "description": "After dinner",
-          "dose_time": "20:00:00"
-        }
-      ]
+          "dose_time": "20:00:00",
+        },
+      ],
     },
     {
       "id": 3,
@@ -134,31 +179,42 @@ final Map<String, dynamic> mockUserData = {
         {
           "dose_name": "Morning",
           "description": "Take after breakfast with water",
-          "dose_time": "07:30:00"
+          "dose_time": "07:30:00",
         },
         {
           "dose_name": "Afternoon",
           "description": "Take after lunch",
-          "dose_time": "13:30:00"
+          "dose_time": "13:30:00",
         },
         {
           "dose_name": "Night",
           "description": "Take after dinner",
-          "dose_time": "21:00:00"
-        }
-      ]
-    }
-  ]
+          "dose_time": "21:00:00",
+        },
+      ],
+    },
+  ],
 };
 
-class profile_screen extends StatefulWidget {
-  const profile_screen({super.key});
+class profile_screen
+    extends
+        StatefulWidget {
+  const profile_screen({
+    super.key,
+  });
 
   @override
-  State<profile_screen> createState() => _ProfileScreenState();
+  State<
+    profile_screen
+  >
+  createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<profile_screen> {
+class _ProfileScreenState
+    extends
+        State<
+          profile_screen
+        > {
   late UserProfile userProfile;
   bool isLoading = true;
 
@@ -167,202 +223,321 @@ class _ProfileScreenState extends State<profile_screen> {
     super.initState();
     _loadUserData();
   }
-  Future<void> _logout() async {
-    var jwt=await SecureStorageService().getJwtToken();
+
+  Future<
+    void
+  >
+  _logout(
+    BuildContext context,
+  ) async {
+    var jwt = await SecureStorageService().getJwtToken();
 
     try {
-      // API endpoint
       const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/authentication/logout';
 
-      // Prepare the request body
-
-      // Make POST request
       final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization':'$jwt',
-
-        },
+        Uri.parse(
+          apiUrl,
+        ),
+        headers:
+            <
+              String,
+              String
+            >{
+              'Content-Type': 'application/json; charset=UTF-8',
+              'Authorization': '$jwt',
+            },
       );
 
-      // Handle response
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        // Success
-        final responseData = jsonDecode(response.body);
-        print("Logged out successfully");
-        // Show success message
+      if (response.statusCode ==
+              200 ||
+          response.statusCode ==
+              201) {
+        // ✅ Backend success
         AwesomeSnackbar.success(
-            context,
-            "Logged out successfully",
-            "Please login to get your details again"
+          context,
+          "Logged out successfully",
+          "Please login to continue",
         );
-        Info().setLoggedIn(false);
-
-
       } else {
-        // Error - show appropriate message
-        final errorData = jsonDecode(response.body);
-        print(errorData);
+        // ❌ Backend error
+        final errorData = jsonDecode(
+          response.body,
+        );
+        String errorMessage = "Logout failed";
 
-        // Show error message based on API response
-        String errorMessage = "logout failed";
-        if (errorData.containsKey('message')) {
-          errorMessage = errorData['message'];
-        } else if (errorData.containsKey('error')) {
-          errorMessage = errorData['error'];
+        if (errorData
+            is Map) {
+          if (errorData.containsKey(
+            'message',
+          )) {
+            errorMessage = errorData['message'];
+          } else if (errorData.containsKey(
+            'error',
+          )) {
+            errorMessage = errorData['error'];
+          }
         }
 
-        AwesomeSnackbar.error(context, "logout Failed", errorMessage);
-      }
-    } catch (error) {
-      // Network or other errors
-      print(error);
-      AwesomeSnackbar.error(
+        AwesomeSnackbar.error(
           context,
-          "Network Error",
-          "Please check your internet connection and try again"
+          "Logout Failed",
+          errorMessage,
+        );
+      }
+    } catch (
+      error
+    ) {
+      // ❌ Network/other error
+      print(
+        "Logout error: $error",
+      );
+      AwesomeSnackbar.error(
+        context,
+        "Network Error",
+        "Please check your internet connection",
+      );
+    } finally {
+      // ✅ Har case me: token delete + redirect to login screen
+      await SecureStorageService().deleteJwtToken();
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder:
+              (
+                context,
+              ) => const login_screen(),
+        ),
+        (
+          Route<
+            dynamic
+          >
+          route,
+        ) => false,
       );
     }
   }
+
   void _loadUserData() {
-    Future.delayed(const Duration(milliseconds: 800), () {
-      setState(() {
-        userProfile = UserProfile.fromJson(mockUserData);
-        isLoading = false;
-      });
-    });
+    Future.delayed(
+      const Duration(
+        milliseconds: 800,
+      ),
+      () {
+        setState(
+          () {
+            userProfile = UserProfile.fromJson(
+              mockUserData,
+            );
+            isLoading = false;
+          },
+        );
+      },
+    );
   }
 
   void _showEditProfileModal() {
-    final TextEditingController nameController = TextEditingController(text: userProfile.name);
-    final TextEditingController emailController = TextEditingController(text: userProfile.email);
-    final TextEditingController aadharController = TextEditingController(text: userProfile.aadharNumber);
+    final TextEditingController nameController = TextEditingController(
+      text: userProfile.name,
+    );
+    final TextEditingController emailController = TextEditingController(
+      text: userProfile.email,
+    );
+    final TextEditingController aadharController = TextEditingController(
+      text: userProfile.aadharNumber,
+    );
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.8,
-        minChildSize: 0.5,
-        maxChildSize: 0.9,
-        builder: (context, scrollController) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(20),
-            ),
-          ),
-          child: Column(
-            children: [
+      builder:
+          (
+            context,
+          ) => DraggableScrollableSheet(
+            initialChildSize: 0.8,
+            minChildSize: 0.5,
+            maxChildSize: 0.9,
+            builder:
+                (
+                  context,
+                  scrollController,
+                ) => Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(
+                        20,
+                      ),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.only(
+                          top: 8,
+                        ),
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(
+                            2,
+                          ),
+                        ),
+                      ),
 
-              Container(
-                margin: const EdgeInsets.only(top: 8),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          controller: scrollController,
+                          padding: const EdgeInsets.all(
+                            20,
+                          ),
+                          child: _buildEditForm(
+                            nameController,
+                            emailController,
+                            aadharController,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              
-              Expanded(
-                child: SingleChildScrollView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.all(20),
-                  child: _buildEditForm(nameController, emailController, aadharController),
-                ),
-              ),
-            ],
           ),
-        ),
-      ),
     );
   }
 
-  void _updateUserProfile(String newName, String newEmail, String newAadhar) {
-    setState(() {
-      userProfile = UserProfile(
-        id: userProfile.id,
-        name: newName,
-        email: newEmail,
-        isStaff: userProfile.isStaff,
-        aadharNumber: newAadhar,
-        isDoctor: userProfile.isDoctor,
-        isMedicalStore: userProfile.isMedicalStore,
-        medicines: userProfile.medicines,
-      );
-    });
+  void _updateUserProfile(
+    String newName,
+    String newEmail,
+    String newAadhar,
+  ) {
+    setState(
+      () {
+        userProfile = UserProfile(
+          id: userProfile.id,
+          name: newName,
+          email: newEmail,
+          isStaff: userProfile.isStaff,
+          aadharNumber: newAadhar,
+          isDoctor: userProfile.isDoctor,
+          isMedicalStore: userProfile.isMedicalStore,
+          medicines: userProfile.medicines,
+        );
+      },
+    );
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     if (isLoading) {
       return Scaffold(
-        backgroundColor: const Color(0xFFF8FAFA),
+        backgroundColor: const Color(
+          0xFFF8FAFA,
+        ),
         body: Center(
           child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(
-              const Color(0xFF2E7D8F),
-            ),
+            valueColor:
+                AlwaysStoppedAnimation<
+                  Color
+                >(
+                  const Color(
+                    0xFF2E7D8F,
+                  ),
+                ),
           ),
         ),
       );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFA),
+      backgroundColor: const Color(
+        0xFFF8FAFA,
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(
+          16.0,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 20),
-            
+            const SizedBox(
+              height: 20,
+            ),
+
             _buildProfileHeader(),
-            const SizedBox(height: 24),
+            const SizedBox(
+              height: 24,
+            ),
 
             _buildQR(),
-            const SizedBox(height: 24),
-            
-            _buildAccountInfoSection(),
-            
-            const SizedBox(height: 24),
-            
-            _buildMedicinesSection(),
-            
-            const SizedBox(height: 24),
-            ElevatedButton(onPressed: (){
-              _logout();
-            },child: Text("Logout"),)
+            const SizedBox(
+              height: 24,
+            ),
 
+            _buildAccountInfoSection(),
+
+            const SizedBox(
+              height: 24,
+            ),
+
+            _buildMedicinesSection(),
+
+            const SizedBox(
+              height: 24,
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _logout(
+                  context,
+                );
+              },
+              child: Text(
+                "Logout",
+              ),
+            ),
           ],
         ),
       ),
     );
   }
-  Widget _buildQR(){
+
+  Widget _buildQR() {
     return QRGenerator(
-      data: userProfile.email,       // ← The data to encode
-      size: 250,                          // Optional: custom size
-      backgroundColor: Colors.white,      // Optional: background color
+      data: userProfile.email, // ← The data to encode
+      size: 250, // Optional: custom size
+      backgroundColor: Colors.white, // Optional: background color
       foregroundColor: Colors.black, // Optional: QR color
       errorText: 'Could not generate QR', // Optional: custom error text
-      padding: const EdgeInsets.all(24),  // Optional: custom padding
+      padding: const EdgeInsets.all(
+        24,
+      ), // Optional: custom padding
     );
   }
+
   Widget _buildProfileHeader() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(
+        20,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(
+          16,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(
+              0.04,
+            ),
             blurRadius: 10,
-            offset: const Offset(0, 2),
+            offset: const Offset(
+              0,
+              2,
+            ),
           ),
         ],
       ),
@@ -374,8 +549,12 @@ class _ProfileScreenState extends State<profile_screen> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFF2E7D8F),
-                  const Color(0xFF4A9FB8),
+                  const Color(
+                    0xFF2E7D8F,
+                  ),
+                  const Color(
+                    0xFF4A9FB8,
+                  ),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -384,7 +563,9 @@ class _ProfileScreenState extends State<profile_screen> {
             ),
             child: Center(
               child: Text(
-                userProfile.name.isNotEmpty ? userProfile.name[0].toUpperCase() : 'U',
+                userProfile.name.isNotEmpty
+                    ? userProfile.name[0].toUpperCase()
+                    : 'U',
                 style: const TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
@@ -393,20 +574,26 @@ class _ProfileScreenState extends State<profile_screen> {
               ),
             ),
           ),
-          
-          const SizedBox(height: 16),
-          
+
+          const SizedBox(
+            height: 16,
+          ),
+
           Text(
             userProfile.name,
             style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF2E7D8F),
+              color: Color(
+                0xFF2E7D8F,
+              ),
             ),
           ),
-          
-          const SizedBox(height: 4),
-          
+
+          const SizedBox(
+            height: 4,
+          ),
+
           Text(
             userProfile.email,
             style: TextStyle(
@@ -414,16 +601,25 @@ class _ProfileScreenState extends State<profile_screen> {
               color: Colors.grey[600],
             ),
           ),
-          
-          const SizedBox(height: 16),
-          
+
+          const SizedBox(
+            height: 16,
+          ),
+
           GestureDetector(
             onTap: _showEditProfileModal,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 10,
+              ),
               decoration: BoxDecoration(
-                color: const Color(0xFF2E7D8F),
-                borderRadius: BorderRadius.circular(25),
+                color: const Color(
+                  0xFF2E7D8F,
+                ),
+                borderRadius: BorderRadius.circular(
+                  25,
+                ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -433,7 +629,9 @@ class _ProfileScreenState extends State<profile_screen> {
                     color: Colors.white,
                     size: 18,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(
+                    width: 8,
+                  ),
                   const Text(
                     'Edit Profile',
                     style: TextStyle(
@@ -452,15 +650,24 @@ class _ProfileScreenState extends State<profile_screen> {
 
   Widget _buildAccountInfoSection() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(
+        20,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(
+          16,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(
+              0.04,
+            ),
             blurRadius: 10,
-            offset: const Offset(0, 2),
+            offset: const Offset(
+              0,
+              2,
+            ),
           ),
         ],
       ),
@@ -472,20 +679,36 @@ class _ProfileScreenState extends State<profile_screen> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: const Color(0xFF2E7D8F),
+              color: const Color(
+                0xFF2E7D8F,
+              ),
             ),
           ),
-          
-          const SizedBox(height: 16),
-          
-          _buildInfoRow('User ID', userProfile.id.toString(), Icons.fingerprint),
-          
-          const SizedBox(height: 12),
-          
-          _buildInfoRow('Aadhar Number', userProfile.aadharNumber, Icons.credit_card),
-          
-          const SizedBox(height: 16),
-          
+
+          const SizedBox(
+            height: 16,
+          ),
+
+          _buildInfoRow(
+            'User ID',
+            userProfile.id.toString(),
+            Icons.fingerprint,
+          ),
+
+          const SizedBox(
+            height: 12,
+          ),
+
+          _buildInfoRow(
+            'Aadhar Number',
+            userProfile.aadharNumber,
+            Icons.credit_card,
+          ),
+
+          const SizedBox(
+            height: 16,
+          ),
+
           Text(
             'Account Type',
             style: TextStyle(
@@ -494,15 +717,26 @@ class _ProfileScreenState extends State<profile_screen> {
               color: Colors.grey[700],
             ),
           ),
-          
-          const SizedBox(height: 8),
-          
+
+          const SizedBox(
+            height: 8,
+          ),
+
           Wrap(
             spacing: 8,
             children: [
-              _buildStatusBadge('Staff', userProfile.isStaff),
-              _buildStatusBadge('Doctor', userProfile.isDoctor),
-              _buildStatusBadge('Medical Store', userProfile.isMedicalStore),
+              _buildStatusBadge(
+                'Staff',
+                userProfile.isStaff,
+              ),
+              _buildStatusBadge(
+                'Doctor',
+                userProfile.isDoctor,
+              ),
+              _buildStatusBadge(
+                'Medical Store',
+                userProfile.isMedicalStore,
+              ),
             ],
           ),
         ],
@@ -510,15 +744,23 @@ class _ProfileScreenState extends State<profile_screen> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value, IconData icon) {
+  Widget _buildInfoRow(
+    String label,
+    String value,
+    IconData icon,
+  ) {
     return Row(
       children: [
         Icon(
           icon,
           size: 20,
-          color: const Color(0xFF2E7D8F),
+          color: const Color(
+            0xFF2E7D8F,
+          ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(
+          width: 12,
+        ),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -536,7 +778,9 @@ class _ProfileScreenState extends State<profile_screen> {
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF2E7D8F),
+                  color: Color(
+                    0xFF2E7D8F,
+                  ),
                 ),
               ),
             ],
@@ -546,35 +790,67 @@ class _ProfileScreenState extends State<profile_screen> {
     );
   }
 
-  Widget _buildStatusBadge(String label, bool isActive) {
+  Widget _buildStatusBadge(
+    String label,
+    bool isActive,
+  ) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 6,
+      ),
       decoration: BoxDecoration(
-        color: isActive 
-            ? const Color(0xFF2E7D8F).withOpacity(0.1)
-            : Colors.grey.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
+        color: isActive
+            ? const Color(
+                0xFF2E7D8F,
+              ).withOpacity(
+                0.1,
+              )
+            : Colors.grey.withOpacity(
+                0.1,
+              ),
+        borderRadius: BorderRadius.circular(
+          20,
+        ),
         border: Border.all(
-          color: isActive 
-              ? const Color(0xFF2E7D8F).withOpacity(0.3)
-              : Colors.grey.withOpacity(0.3),
+          color: isActive
+              ? const Color(
+                  0xFF2E7D8F,
+                ).withOpacity(
+                  0.3,
+                )
+              : Colors.grey.withOpacity(
+                  0.3,
+                ),
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            isActive ? Icons.check_circle : Icons.cancel,
+            isActive
+                ? Icons.check_circle
+                : Icons.cancel,
             size: 14,
-            color: isActive ? const Color(0xFF2E7D8F) : Colors.grey,
+            color: isActive
+                ? const Color(
+                    0xFF2E7D8F,
+                  )
+                : Colors.grey,
           ),
-          const SizedBox(width: 6),
+          const SizedBox(
+            width: 6,
+          ),
           Text(
             label,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: isActive ? const Color(0xFF2E7D8F) : Colors.grey,
+              color: isActive
+                  ? const Color(
+                      0xFF2E7D8F,
+                    )
+                  : Colors.grey,
             ),
           ),
         ],
@@ -591,36 +867,63 @@ class _ProfileScreenState extends State<profile_screen> {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: const Color(0xFF2E7D8F),
+            color: const Color(
+              0xFF2E7D8F,
+            ),
           ),
         ),
-        
-        const SizedBox(height: 16),
-        
+
+        const SizedBox(
+          height: 16,
+        ),
+
         ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: userProfile.medicines.length,
-          separatorBuilder: (context, index) => const SizedBox(height: 16),
-          itemBuilder: (context, index) {
-            return _buildMedicineCard(userProfile.medicines[index]);
-          },
+          separatorBuilder:
+              (
+                context,
+                index,
+              ) => const SizedBox(
+                height: 16,
+              ),
+          itemBuilder:
+              (
+                context,
+                index,
+              ) {
+                return _buildMedicineCard(
+                  userProfile.medicines[index],
+                );
+              },
         ),
       ],
     );
   }
 
-  Widget _buildMedicineCard(Medicine medicine) {
+  Widget _buildMedicineCard(
+    Medicine medicine,
+  ) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(
+        16,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(
+          12,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(
+              0.04,
+            ),
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: const Offset(
+              0,
+              2,
+            ),
           ),
         ],
       ),
@@ -631,20 +934,33 @@ class _ProfileScreenState extends State<profile_screen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(
+                  8,
+                ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2E7D8F).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  color:
+                      const Color(
+                        0xFF2E7D8F,
+                      ).withOpacity(
+                        0.1,
+                      ),
+                  borderRadius: BorderRadius.circular(
+                    8,
+                  ),
                 ),
                 child: const Icon(
                   Icons.medication,
                   size: 20,
-                  color: Color(0xFF2E7D8F),
+                  color: Color(
+                    0xFF2E7D8F,
+                  ),
                 ),
               ),
-              
-              const SizedBox(width: 12),
-              
+
+              const SizedBox(
+                width: 12,
+              ),
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -654,12 +970,16 @@ class _ProfileScreenState extends State<profile_screen> {
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF2E7D8F),
+                        color: Color(
+                          0xFF2E7D8F,
+                        ),
                       ),
                     ),
-                    
-                    const SizedBox(height: 4),
-                    
+
+                    const SizedBox(
+                      height: 4,
+                    ),
+
                     Text(
                       medicine.description,
                       style: TextStyle(
@@ -672,23 +992,35 @@ class _ProfileScreenState extends State<profile_screen> {
               ),
             ],
           ),
-          
-          const SizedBox(height: 12),
-          
+
+          const SizedBox(
+            height: 12,
+          ),
+
           Row(
             children: [
               Expanded(
-                child: _buildMedicineDetail('Manufacturer', medicine.manufacturer),
+                child: _buildMedicineDetail(
+                  'Manufacturer',
+                  medicine.manufacturer,
+                ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(
+                width: 16,
+              ),
               Expanded(
-                child: _buildMedicineDetail('Expires', medicine.expiryDate),
+                child: _buildMedicineDetail(
+                  'Expires',
+                  medicine.expiryDate,
+                ),
               ),
             ],
           ),
-          
-          const SizedBox(height: 12),
-          
+
+          const SizedBox(
+            height: 12,
+          ),
+
           Text(
             'Dosage Schedule',
             style: TextStyle(
@@ -697,16 +1029,27 @@ class _ProfileScreenState extends State<profile_screen> {
               color: Colors.grey[700],
             ),
           ),
-          
-          const SizedBox(height: 8),
-          
-          ...medicine.doses.map((dose) => _buildDoseItem(dose)),
+
+          const SizedBox(
+            height: 8,
+          ),
+
+          ...medicine.doses.map(
+            (
+              dose,
+            ) => _buildDoseItem(
+              dose,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildMedicineDetail(String label, String value) {
+  Widget _buildMedicineDetail(
+    String label,
+    String value,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -729,15 +1072,33 @@ class _ProfileScreenState extends State<profile_screen> {
     );
   }
 
-  Widget _buildDoseItem(Dose dose) {
+  Widget _buildDoseItem(
+    Dose dose,
+  ) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(
+        bottom: 8,
+      ),
+      padding: const EdgeInsets.all(
+        12,
+      ),
       decoration: BoxDecoration(
-        color: const Color(0xFF2E7D8F).withOpacity(0.05),
-        borderRadius: BorderRadius.circular(8),
+        color:
+            const Color(
+              0xFF2E7D8F,
+            ).withOpacity(
+              0.05,
+            ),
+        borderRadius: BorderRadius.circular(
+          8,
+        ),
         border: Border.all(
-          color: const Color(0xFF2E7D8F).withOpacity(0.1),
+          color:
+              const Color(
+                0xFF2E7D8F,
+              ).withOpacity(
+                0.1,
+              ),
         ),
       ),
       child: Row(
@@ -745,11 +1106,15 @@ class _ProfileScreenState extends State<profile_screen> {
           Icon(
             Icons.schedule,
             size: 16,
-            color: const Color(0xFF2E7D8F),
+            color: const Color(
+              0xFF2E7D8F,
+            ),
           ),
-          
-          const SizedBox(width: 8),
-          
+
+          const SizedBox(
+            width: 8,
+          ),
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -761,10 +1126,14 @@ class _ProfileScreenState extends State<profile_screen> {
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF2E7D8F),
+                        color: Color(
+                          0xFF2E7D8F,
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(
+                      width: 8,
+                    ),
                     Text(
                       dose.doseTime,
                       style: TextStyle(
@@ -775,7 +1144,7 @@ class _ProfileScreenState extends State<profile_screen> {
                     ),
                   ],
                 ),
-                
+
                 Text(
                   dose.description,
                   style: TextStyle(
@@ -791,7 +1160,11 @@ class _ProfileScreenState extends State<profile_screen> {
     );
   }
 
-  Widget _buildEditForm(TextEditingController nameController, TextEditingController emailController, TextEditingController aadharController) {
+  Widget _buildEditForm(
+    TextEditingController nameController,
+    TextEditingController emailController,
+    TextEditingController aadharController,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -800,26 +1173,54 @@ class _ProfileScreenState extends State<profile_screen> {
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF2E7D8F),
+            color: Color(
+              0xFF2E7D8F,
+            ),
           ),
         ),
-        
-        const SizedBox(height: 20),
-        
-        _buildEditField('Name', nameController, Icons.person),
-        const SizedBox(height: 16),
-        
-        _buildEditField('Email', emailController, Icons.email),
-        const SizedBox(height: 16),
-        
-        _buildEditField('Aadhar Number', aadharController, Icons.credit_card),
-        const SizedBox(height: 24),
-        
+
+        const SizedBox(
+          height: 20,
+        ),
+
+        _buildEditField(
+          'Name',
+          nameController,
+          Icons.person,
+        ),
+        const SizedBox(
+          height: 16,
+        ),
+
+        _buildEditField(
+          'Email',
+          emailController,
+          Icons.email,
+        ),
+        const SizedBox(
+          height: 16,
+        ),
+
+        _buildEditField(
+          'Aadhar Number',
+          aadharController,
+          Icons.credit_card,
+        ),
+        const SizedBox(
+          height: 24,
+        ),
+
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(
+            16,
+          ),
           decoration: BoxDecoration(
-            color: Colors.grey.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
+            color: Colors.grey.withOpacity(
+              0.1,
+            ),
+            borderRadius: BorderRadius.circular(
+              12,
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -831,7 +1232,9 @@ class _ProfileScreenState extends State<profile_screen> {
                     size: 16,
                     color: Colors.grey[600],
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(
+                    width: 8,
+                  ),
                   Text(
                     'Account permissions (cannot be changed)',
                     style: TextStyle(
@@ -842,47 +1245,73 @@ class _ProfileScreenState extends State<profile_screen> {
                   ),
                 ],
               ),
-              
-              const SizedBox(height: 12),
-              
+
+              const SizedBox(
+                height: 12,
+              ),
+
               Wrap(
                 spacing: 8,
                 children: [
-                  _buildStatusBadge('Staff', userProfile.isStaff),
-                  _buildStatusBadge('Doctor', userProfile.isDoctor),
-                  _buildStatusBadge('Medical Store', userProfile.isMedicalStore),
+                  _buildStatusBadge(
+                    'Staff',
+                    userProfile.isStaff,
+                  ),
+                  _buildStatusBadge(
+                    'Doctor',
+                    userProfile.isDoctor,
+                  ),
+                  _buildStatusBadge(
+                    'Medical Store',
+                    userProfile.isMedicalStore,
+                  ),
                 ],
               ),
             ],
           ),
         ),
-        
-        const SizedBox(height: 24),
-        
+
+        const SizedBox(
+          height: 24,
+        ),
+
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
             onPressed: () {
-
               _updateUserProfile(
                 nameController.text,
                 emailController.text,
                 aadharController.text,
               );
-              
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
+
+              Navigator.pop(
+                context,
+              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(
                 SnackBar(
-                  content: const Text('Profile updated successfully!'),
-                  backgroundColor: const Color(0xFF2E7D8F),
+                  content: const Text(
+                    'Profile updated successfully!',
+                  ),
+                  backgroundColor: const Color(
+                    0xFF2E7D8F,
+                  ),
                 ),
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2E7D8F),
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              backgroundColor: const Color(
+                0xFF2E7D8F,
+              ),
+              padding: const EdgeInsets.symmetric(
+                vertical: 16,
+              ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(
+                  12,
+                ),
               ),
             ),
             child: const Text(
@@ -899,7 +1328,11 @@ class _ProfileScreenState extends State<profile_screen> {
     );
   }
 
-  Widget _buildEditField(String label, TextEditingController controller, IconData icon) {
+  Widget _buildEditField(
+    String label,
+    TextEditingController controller,
+    IconData icon,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -911,29 +1344,44 @@ class _ProfileScreenState extends State<profile_screen> {
             color: Colors.grey[700],
           ),
         ),
-        
-        const SizedBox(height: 8),
-        
+
+        const SizedBox(
+          height: 8,
+        ),
+
         TextField(
           controller: controller,
           decoration: InputDecoration(
             prefixIcon: Icon(
               icon,
-              color: const Color(0xFF2E7D8F),
+              color: const Color(
+                0xFF2E7D8F,
+              ),
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(
+                12,
+              ),
               borderSide: BorderSide(
-                color: Colors.grey.withOpacity(0.3),
+                color: Colors.grey.withOpacity(
+                  0.3,
+                ),
               ),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(
+                12,
+              ),
               borderSide: const BorderSide(
-                color: Color(0xFF2E7D8F),
+                color: Color(
+                  0xFF2E7D8F,
+                ),
               ),
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
           ),
         ),
       ],
