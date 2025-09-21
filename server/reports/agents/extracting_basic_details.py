@@ -8,7 +8,8 @@ from pydantic import BaseModel
 from typing import List, Optional
 import os
 from dotenv import load_dotenv
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_openai import ChatOpenAI
+from langchain.schema import HumanMessage
 
 # ------------------------------
 # Load API key
@@ -22,187 +23,127 @@ genai.configure(api_key=google_api_key)
 # ------------------------------
 class ReportDetails(BaseModel):
     disease_name: Optional[str] = None
-    disease_list_match: Optional[bool] = None
     doctor_name: Optional[str] = None
     hospital_address: Optional[str] = None
     end: bool = False
     questions: Optional[List[str]] = None
 
+class PageReport(BaseModel):
+    page_number: int
+    details: ReportDetails
+
 # ------------------------------
 # Gemini config
 # ------------------------------
-model = genai.GenerativeModel("gemini-1.5-flash")
+generation_config = {
+    "temperature": 0.7,
+    "top_p": 1,
+    "top_k": 0,
+    "max_output_tokens": 4096,
+}
+
+safety_settings = [
+    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+]
+
+system_prompt = """
+You are a medical report parser. Your task is to extract the following details from a medical report image:
+
+- disease_name
+- doctor_name
+- hospital_address
+- end (True if report ends, else False)
+- questions (list any questions if needed)
+
+Please respond ONLY in pure JSON using this format:
+
+{
+    "disease_name": "Example Disease",
+    "doctor_name": "Dr. ABC",
+    "hospital_address": "XYZ Hospital",
+    "end": false,
+    "questions": ["Question 1", "Question 2"]
+}
+
+Do NOT explain anything. Do NOT include code blocks. Respond with valid JSON only.
+"""
 
 # ------------------------------
-# Extract text from image
+# Models
 # ------------------------------
-def extract_text_from_image(image: Image.Image) -> dict:
+report_model = genai.GenerativeModel(
+    "gemini-1.5-flash",
+    generation_config=generation_config,
+    safety_settings=safety_settings
+)
+
+summary_model = ChatOpenAI(temperature=0.7)
+
+# ------------------------------
+# Extract from a single image
+# ------------------------------
+def extract_report_details_from_image(image: Image.Image) -> Optional[ReportDetails]:
     try:
         with tempfile.NamedTemporaryFile(suffix=".jpeg", delete=True) as tmp_file:
             image.save(tmp_file.name, format="JPEG")
             uploaded_file = genai.upload_file(path=tmp_file.name)
+            response = report_model.generate_content([system_prompt, uploaded_file])
 
-            prompt = """
-            Analyze this medical report page. Extract the following:
-            1. Disease name (AI should detect it)
-            2. Prescribing doctor
-            3. Hospital address
-
-            Respond ONLY in JSON like:
-            {
-              "disease_name": "...",
-              "doctor_name": "...",
-              "hospital_address": "..."
-            }
-
-            If info is missing or uncertain, put null.
-            """
-
-            response = model.generate_content([prompt, uploaded_file])
             if hasattr(response, "text"):
                 clean_text = re.sub(r"```(?:json)?", "", response.text).strip("` \n")
                 match = re.search(r"(\{.*\})", clean_text, re.DOTALL)
                 if match:
-                    return json.loads(match.group(1))
+                    data = json.loads(match.group(1))
+                    return ReportDetails(**data)
     except Exception as e:
         print(f"Error: {e}")
-    return {}
+    return None
 
 # ------------------------------
-# Ask LLM to generate questions for missing info
+# Extract from PDF
 # ------------------------------
-def generate_questions(missing_fields: List[str]) -> List[str]:
-    if not missing_fields:
-        return []
-
-    prompt = f"""
-    The following fields are missing in the medical report: {missing_fields}.
-    Ask the user polite and clear questions to get this info.
-    Example:
-    - "Could you please tell me the doctor's name?"
-    - "What is the hospital address?"
-    """
-
-    response = model.generate_content(prompt)
-    if hasattr(response, "text"):
-        return [q.strip("- ").strip() for q in response.text.split("\n") if q.strip()]
-    return []
-
-# ------------------------------
-# Parse PDF
-# ------------------------------
-def parse_pdf_auto(pdf_path: str, disease_list: List[str], memory: List = None) -> ReportDetails:
-    memory = memory or []
-    details = ReportDetails(end=False, questions=[])
-
+def extract_report_from_pdf(pdf_path: str) -> List[PageReport]:
+    results = []
     doc = fitz.open(pdf_path)
-    extracted = {}
-
-    for page in doc:
+    for i, page in enumerate(doc, start=1):
         pix = page.get_pixmap()
         img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-        page_data = extract_text_from_image(img)
-        extracted.update({k: v for k, v in page_data.items() if v})
-
-    # ------------------------------
-    # Disease check with list
-    # ------------------------------
-    if extracted.get("disease_name"):
-        matched = None
-        for d in disease_list:
-            if d.lower() in extracted["disease_name"].lower():
-                matched = d
-                break
-        details.disease_name = matched if matched else extracted["disease_name"]
-        details.disease_list_match = bool(matched)
-
-    # Doctor & hospital
-    details.doctor_name = extracted.get("doctor_name")
-    details.hospital_address = extracted.get("hospital_address")
-
-    # ------------------------------
-    # Find missing fields
-    # ------------------------------
-    missing = []
-    if not details.disease_name:
-        missing.append("disease_name")
-    if not details.doctor_name:
-        missing.append("doctor_name")
-    if not details.hospital_address:
-        missing.append("hospital_address")
-
-    details.questions = generate_questions(missing)
-    details.end = len(missing) == 0
-
-    # Add to memory
-    memory.append(AIMessage(content=f"Extracted details: {details.dict()}"))
-    if details.questions:
-        for q in details.questions:
-            memory.append(AIMessage(content=q))
-
-    return details, memory
+        details = extract_report_details_from_image(img)
+        if details:
+            results.append(PageReport(page_number=i, details=details))
+    return results
 
 # ------------------------------
-# Update with user response
+# Generate overall summary
 # ------------------------------
-def update_with_user_response(details: ReportDetails, memory: List, user_input: str):
-    """
-    User ka reply lega aur AI ko bhej kar decide karega ki konsa field fill ho raha hai.
-    """
+def generate_report_summary(page_reports: List[PageReport]) -> str:
+    data_for_summary = [r.dict() for r in page_reports]
+
     prompt = f"""
-    Current details: {details.dict()}
-    User said: "{user_input}"
+    You are a medical report summarizer.
+    Here are the extracted details from all pages:
 
-    Decide which field (disease_name, doctor_name, hospital_address) this user input belongs to.
-    Return JSON only like:
-    {{
-      "field": "...",
-      "value": "..."
-    }}
-    If it doesn't match, put field as null.
+    {json.dumps(data_for_summary, indent=2)}
+
+    Generate a human-readable summary of the report,
+    mentioning diseases, doctors, hospital info, end status,
+    and any follow-up questions. Keep it professional.
     """
-
-    response = model.generate_content(prompt)
-    field, value = None, None
-    if hasattr(response, "text"):
-        try:
-            data = json.loads(response.text)
-            field, value = data.get("field"), data.get("value")
-        except:
-            pass
-
-    if field and value:
-        setattr(details, field, value)
-        memory.append(HumanMessage(content=f"User provided {field}: {value}"))
-
-    # Re-check missing
-    missing = []
-    if not details.disease_name:
-        missing.append("disease_name")
-    if not details.doctor_name:
-        missing.append("doctor_name")
-    if not details.hospital_address:
-        missing.append("hospital_address")
-
-    details.questions = generate_questions(missing)
-    details.end = len(missing) == 0
-
-    if details.questions:
-        for q in details.questions:
-            memory.append(AIMessage(content=q))
-
-    return details, memory
+    response = summary_model([HumanMessage(content=prompt)])
+    return response.content.strip()
 
 # ------------------------------
-# Example usage
+# Main
 # ------------------------------
 if __name__ == "__main__":
     pdf_file = "test.pdf"
-    diseases = ["Glycogen Storage Disease", "Diabetes", "Hypertension"]
+    final_results = extract_report_from_pdf(pdf_file)
 
-    details, memory = parse_pdf_auto(pdf_file, diseases, [])
+    # Convert Pydantic models to dicts for JSON output
+    output_json = [r.dict() for r in final_results]
 
-    print("AI First Parse:", details.dict())
-    print("\nChat so far:")
-    for msg in memory:
-        print(f"{msg.__class__.__name__}: {msg.content}")
+    # Print structured JSON
+    print(json.dumps(output_json, indent=2))

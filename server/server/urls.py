@@ -21,7 +21,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/authentication/',include('authentication.urls')),
     path('api/',include('userDeets.urls')),
-    # path('api/reports/',include('reports.urls')),
+    path('api/reports/',include('reports.urls')),
     path('',health_check),
+    path('api/diet/',include('diet.urls')),  
 
 ]
