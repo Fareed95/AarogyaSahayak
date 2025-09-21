@@ -68,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   Future<void> _getUserData() async {
     try {
-      const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/authentication/user/';
+      const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/authentication/user';
 
       var token = await SecureStorageService().getJwtToken();
 
