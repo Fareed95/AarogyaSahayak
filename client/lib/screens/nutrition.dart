@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-// VideoData Model
+// VideoData Model (unchanged)
 class VideoData {
   final String id;
   final String title;
@@ -43,7 +43,7 @@ class VideoData {
   }
 }
 
-// Mock Video Data
+// Mock Video Data (unchanged)
 List<VideoData> mockVideoData = [
   VideoData(
     id: '1',
@@ -101,6 +101,51 @@ List<VideoData> mockVideoData = [
   ),
 ];
 
+// Theme Provider for Light/Dark Mode
+class ThemeProvider extends ChangeNotifier {
+  ThemeMode _themeMode = ThemeMode.light;
+
+  ThemeMode get themeMode => _themeMode;
+
+  bool get isDarkMode => _themeMode == ThemeMode.dark;
+
+  void toggleTheme(bool isDark) {
+    _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
+    notifyListeners();
+  }
+}
+
+// Custom Theme Data
+class AppTheme {
+  static const Color primaryBlue = Color(0xFF4A5F7A); // More grayish blue
+  static const Color accentOrange = Color(0xFFFCA311);
+  static const Color darkNavy = Color(0xFF14213D);
+  
+  static ThemeData lightTheme = ThemeData(
+    brightness: Brightness.light,
+    primaryColor: primaryBlue,
+    scaffoldBackgroundColor: const Color(0xFFF8FAFA),
+    colorScheme: const ColorScheme.light(
+      primary: primaryBlue,
+      secondary: accentOrange,
+      surface: Colors.white,
+      background: Color(0xFFF8FAFA),
+    ),
+  );
+
+  static ThemeData darkTheme = ThemeData(
+    brightness: Brightness.dark,
+    primaryColor: primaryBlue,
+    scaffoldBackgroundColor: const Color(0xFF0F1419),
+    colorScheme: const ColorScheme.dark(
+      primary: primaryBlue,
+      secondary: accentOrange,
+      surface: Color(0xFF1A1F2E),
+      background: Color(0xFF0F1419),
+    ),
+  );
+}
+
 // VideoCard Widget
 class VideoCard extends StatelessWidget {
   final VideoData videoData;
@@ -114,15 +159,18 @@ class VideoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Container(
+      height: 280, // Fixed height for consistency
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: isDark ? Colors.black26 : Colors.black.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -131,129 +179,147 @@ class VideoCard extends StatelessWidget {
         children: [
           // Video thumbnail with play button
           Container(
-            height: 180,
+            height: 120, // Reduced height
             decoration: const BoxDecoration(
               borderRadius: BorderRadius.vertical(
-                top: Radius.circular(16),
+                top: Radius.circular(20),
               ),
             ),
             child: ClipRRect(
               borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
+                top: Radius.circular(20),
               ),
-              child: _buildVideoThumbnail(),
+              child: _buildVideoThumbnail(isDark),
             ),
           ),
 
           // Video info
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Category badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2E7D8F).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    videoData.category,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF2E7D8F),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Category badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.accentOrange.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      videoData.category,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.accentOrange,
+                      ),
                     ),
                   ),
-                ),
 
-                const SizedBox(height: 8),
+                  const SizedBox(height: 8),
 
-                // Video title
-                Text(
-                  videoData.title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF2E7D8F),
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-
-                const SizedBox(height: 6),
-
-                // Video description
-                Text(
-                  videoData.description,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                    height: 1.4,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-
-                const SizedBox(height: 8),
-
-                // Duration and action row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Duration
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.access_time,
-                          size: 14,
-                          color: Colors.grey[500],
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          videoData.duration,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[500],
-                          ),
-                        ),
-                      ],
+                  // Video title
+                  Text(
+                    videoData.title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? Colors.white : AppTheme.darkNavy,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
 
-                    // Watch button
-                    GestureDetector(
-                      onTap: onWatchPressed,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2E7D8F),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
+                  const SizedBox(height: 6),
+
+                  // Video description
+                  Expanded(
+                    child: Text(
+                      videoData.description,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        height: 1.3,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // Duration and action row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Duration
+                      Expanded(
+                        child: Row(
                           children: [
                             Icon(
-                              Icons.play_arrow,
-                              color: Colors.white,
-                              size: 16,
+                              Icons.access_time_rounded,
+                              size: 12,
+                              color: isDark ? Colors.grey[500] : Colors.grey[500],
                             ),
-                            SizedBox(width: 4),
+                            const SizedBox(width: 4),
                             Text(
-                              'Watch',
+                              videoData.duration,
                               style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
+                                fontSize: 11,
+                                color: isDark ? Colors.grey[500] : Colors.grey[500],
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+
+                      // Watch button
+                      GestureDetector(
+                        onTap: onWatchPressed,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [AppTheme.primaryBlue, AppTheme.accentOrange],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.primaryBlue.withOpacity(0.3),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.play_arrow_rounded,
+                                color: Colors.white,
+                                size: 14,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                'Watch',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -262,7 +328,7 @@ class VideoCard extends StatelessWidget {
   }
 
   // Build video thumbnail with play button overlay
-  Widget _buildVideoThumbnail() {
+  Widget _buildVideoThumbnail(bool isDark) {
     return Stack(
       children: [
         // Thumbnail placeholder
@@ -272,8 +338,8 @@ class VideoCard extends StatelessWidget {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                const Color(0xFF2E7D8F).withOpacity(0.8),
-                const Color(0xFF4A9FB8).withOpacity(0.6),
+                AppTheme.primaryBlue.withOpacity(0.8),
+                AppTheme.accentOrange.withOpacity(0.6),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -284,17 +350,17 @@ class VideoCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  Icons.play_circle_filled,
-                  size: 50,
+                  Icons.play_circle_filled_rounded,
+                  size: 36,
                   color: Colors.white,
                 ),
-                SizedBox(height: 8),
+                SizedBox(height: 4),
                 Text(
                   'Watch Video',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -327,7 +393,6 @@ class _NutritionState extends State<Nutrition> {
   void initState() {
     super.initState();
     _loadMoreVideos();
-
     _scrollController.addListener(_scrollListener);
   }
 
@@ -361,6 +426,8 @@ class _NutritionState extends State<Nutrition> {
   }
 
   void _showVideoModal(VideoData videoData) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -370,21 +437,21 @@ class _NutritionState extends State<Nutrition> {
         minChildSize: 0.5,
         maxChildSize: 0.9,
         builder: (context, scrollController) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(20),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(24),
             ),
           ),
           child: Column(
             children: [
               // Modal handle
               Container(
-                margin: const EdgeInsets.only(top: 8),
-                width: 40,
+                margin: const EdgeInsets.only(top: 12),
+                width: 48,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: isDark ? Colors.grey[600] : Colors.grey[300],
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -393,139 +460,144 @@ class _NutritionState extends State<Nutrition> {
               Expanded(
                 child: SingleChildScrollView(
                   controller: scrollController,
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Video thumbnail
                       Container(
-                        height: 200,
+                        height: 220,
                         width: double.infinity,
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              const Color(0xFF2E7D8F).withOpacity(0.8),
-                              const Color(0xFF4A9FB8).withOpacity(0.6),
+                              AppTheme.primaryBlue.withOpacity(0.8),
+                              AppTheme.accentOrange.withOpacity(0.6),
                             ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(20),
                         ),
                         child: const Center(
                           child: Icon(
-                            Icons.play_circle_filled,
-                            size: 60,
+                            Icons.play_circle_filled_rounded,
+                            size: 80,
                             color: Colors.white,
                           ),
                         ),
                       ),
 
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
 
                       // Video title
                       Text(
                         videoData.title,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF2E7D8F),
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? Colors.white : AppTheme.darkNavy,
                         ),
                       ),
 
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
 
                       // Category and duration
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF2E7D8F).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
+                              color: AppTheme.accentOrange.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               videoData.category,
                               style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: Color(0xFF2E7D8F),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.accentOrange,
                               ),
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 16),
                           Icon(
-                            Icons.access_time,
-                            size: 16,
-                            color: Colors.grey[500],
+                            Icons.access_time_rounded,
+                            size: 18,
+                            color: isDark ? Colors.grey[500] : Colors.grey[500],
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: 6),
                           Text(
                             videoData.duration,
                             style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[500],
+                              fontSize: 15,
+                              color: isDark ? Colors.grey[500] : Colors.grey[500],
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ],
                       ),
 
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
 
                       // Description
-                      const Text(
+                      Text(
                         'About this video:',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 18,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF2E7D8F),
+                          color: isDark ? Colors.white : AppTheme.darkNavy,
                         ),
                       ),
 
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
 
                       Text(
                         videoData.description,
                         style: TextStyle(
                           fontSize: 16,
-                          color: Colors.grey[700],
-                          height: 1.5,
+                          color: isDark ? Colors.grey[300] : Colors.grey[700],
+                          height: 1.6,
                         ),
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 24),
 
                       // Video URL info
                       Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(12),
+                          color: isDark ? AppTheme.darkNavy.withOpacity(0.5) : Colors.grey[50],
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isDark ? Colors.grey[700]! : Colors.grey[200]!,
+                          ),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Video Link:',
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 16,
                                 fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white : AppTheme.darkNavy,
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 12),
                             Text(
                               videoData.youtubeUrl,
                               style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
+                                fontSize: 13,
+                                color: isDark ? Colors.grey[400] : Colors.grey[600],
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            const Text(
+                            const SizedBox(height: 12),
+                            Text(
                               'Copy this link to watch the video in your browser or YouTube app.',
                               style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
+                                fontSize: 13,
+                                color: isDark ? Colors.grey[500] : Colors.grey[500],
                               ),
                             ),
                           ],
@@ -544,18 +616,204 @@ class _NutritionState extends State<Nutrition> {
     );
   }
 
+  void _showBarcodeScannerModal() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.8,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(24),
+          ),
+        ),
+        child: Column(
+          children: [
+            // Modal handle
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 48,
+              height: 4,
+              decoration: BoxDecoration(
+                color: isDark ? Colors.grey[600] : Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+
+            // Scanner content
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    Text(
+                      'Scan Food or Barcode',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : AppTheme.darkNavy,
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 12),
+                    
+                    Text(
+                      'Point your camera at food items or barcodes to get instant nutritional information',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        height: 1.5,
+                      ),
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // Camera preview placeholder
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isDark ? AppTheme.darkNavy.withOpacity(0.5) : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: AppTheme.primaryBlue.withOpacity(0.3),
+                            width: 2,
+                          ),
+                        ),
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.camera_alt_rounded,
+                                size: 80,
+                                color: AppTheme.primaryBlue.withOpacity(0.6),
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Camera View',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.primaryBlue.withOpacity(0.8),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Position item within the frame',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: isDark ? Colors.grey[500] : Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Action buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [AppTheme.primaryBlue, AppTheme.accentOrange],
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.primaryBlue.withOpacity(0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                // Add your camera scanning logic here
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Opening camera scanner...')),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                shadowColor: Colors.transparent,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.qr_code_scanner_rounded,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Start Scanning',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFA),
+      backgroundColor: Theme.of(context).colorScheme.background,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
 
       body: SingleChildScrollView(
         controller: _scrollController,
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.fromLTRB(20.0, 8.0, 20.0, 20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeaderSection(),
+            _buildScannerSection(isDark),
+            
+            const SizedBox(height: 24),
+            
+            _buildNutrientTracker(isDark),
+
+            const SizedBox(height: 32),
+
+            _buildHeaderSection(isDark),
 
             const SizedBox(height: 24),
 
@@ -563,55 +821,372 @@ class _NutritionState extends State<Nutrition> {
 
             const SizedBox(height: 32),
 
-            _buildContentSection(),
+            _buildContentSection(isDark),
 
             const SizedBox(height: 24),
 
             if (currentVideoIndex < mockVideoData.length)
-              _buildLoadingIndicator(),
+              _buildLoadingIndicator(isDark),
           ],
         ),
       ),
     );
   }
 
-  // Header section widget
-  Widget _buildHeaderSection() {
+  // Scanner section
+  Widget _buildScannerSection(bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFF2E7D8F).withOpacity(0.1),
-            const Color(0xFF4A9FB8).withOpacity(0.05),
+            AppTheme.primaryBlue.withOpacity(0.1),
+            AppTheme.accentOrange.withOpacity(0.05),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFF2E7D8F).withOpacity(0.1),
+          color: AppTheme.primaryBlue.withOpacity(0.2),
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Nutrition Education Hub',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF2E7D8F),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.accentOrange.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  Icons.qr_code_scanner_rounded,
+                  color: AppTheme.accentOrange,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Food & Barcode Scanner',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : AppTheme.darkNavy,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Scan to get instant nutrition facts',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 20),
+          
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppTheme.primaryBlue, AppTheme.accentOrange],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryBlue.withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: ElevatedButton(
+              onPressed: _showBarcodeScannerModal,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.camera_alt_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Open Scanner',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Discover expert insights on nutrition and healthy living',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
-              height: 1.4,
+        ],
+      ),
+    );
+  }
+
+  // Nutrient Tracker section
+  Widget _buildNutrientTracker(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.black26 : Colors.black.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryBlue.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  Icons.analytics_rounded,
+                  color: AppTheme.primaryBlue,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Daily Nutrient Tracker',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : AppTheme.darkNavy,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Track your daily nutrition goals',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 24),
+          
+          // Nutrient progress indicators
+          Column(
+            children: [
+              _buildNutrientProgress('Calories', 1250, 2000, AppTheme.accentOrange, isDark),
+              const SizedBox(height: 16),
+              _buildNutrientProgress('Protein', 45, 80, AppTheme.primaryBlue, isDark),
+              const SizedBox(height: 16),
+              _buildNutrientProgress('Carbs', 120, 200, const Color(0xFF8B5A3C), isDark),
+              const SizedBox(height: 16),
+              _buildNutrientProgress('Fat', 35, 65, const Color(0xFF6B46C1), isDark),
+            ],
+          ),
+          
+          const SizedBox(height: 20),
+          
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: isDark ? AppTheme.darkNavy.withOpacity(0.3) : AppTheme.primaryBlue.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppTheme.primaryBlue.withOpacity(0.2),
+              ),
             ),
+            child: TextButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Opening detailed nutrition tracker...')),
+                );
+              },
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.trending_up_rounded,
+                    color: AppTheme.primaryBlue,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'View Detailed Analytics',
+                    style: TextStyle(
+                      color: AppTheme.primaryBlue,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNutrientProgress(String label, int current, int target, Color color, bool isDark) {
+    final progress = (current / target).clamp(0.0, 1.0);
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : AppTheme.darkNavy,
+              ),
+            ),
+            Text(
+              '$current / $target ${label == 'Calories' ? 'kcal' : 'g'}',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: isDark ? Colors.grey[400] : Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 8,
+          decoration: BoxDecoration(
+            color: isDark ? Colors.grey[700] : Colors.grey[200],
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: FractionallySizedBox(
+            alignment: Alignment.centerLeft,
+            widthFactor: progress,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [color, color.withOpacity(0.7)],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Header section widget
+  Widget _buildHeaderSection(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.accentOrange.withOpacity(0.1),
+            AppTheme.primaryBlue.withOpacity(0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppTheme.accentOrange.withOpacity(0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.accentOrange.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  Icons.school_rounded,
+                  color: AppTheme.accentOrange,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Nutrition Education Hub',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : AppTheme.darkNavy,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Discover expert insights on nutrition and healthy living',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -620,25 +1195,27 @@ class _NutritionState extends State<Nutrition> {
 
   // Video grid builder
   Widget _buildVideoGrid() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Featured Videos',
           style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF2E7D8F),
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: isDark ? Colors.white : AppTheme.darkNavy,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
 
         // Grid of videos - displays two videos per row
         ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: (displayedVideos.length / 2).ceil(),
-          separatorBuilder: (context, index) => const SizedBox(height: 16),
+          separatorBuilder: (context, index) => const SizedBox(height: 20),
           itemBuilder: (context, index) {
             final startIndex = index * 2;
             final endIndex = (startIndex + 2).clamp(0, displayedVideos.length);
@@ -656,7 +1233,7 @@ class _NutritionState extends State<Nutrition> {
 
                 // Second video in row (if exists)
                 if (rowVideos.length > 1) ...[
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: VideoCard(
                       videoData: rowVideos[1],
@@ -673,7 +1250,7 @@ class _NutritionState extends State<Nutrition> {
   }
 
   // Content section with read more functionality
-  Widget _buildContentSection() {
+  Widget _buildContentSection(bool isDark) {
     const String shortText = "NutriScan helps you make informed decisions about your nutrition. "
         "Our comprehensive database provides detailed nutritional information "
         "to support your health journey.";
@@ -687,16 +1264,17 @@ class _NutritionState extends State<Nutrition> {
         "personalized recommendations, and integration with your health goals. "
         "Whether you're managing a specific dietary requirement or simply want "
         "to eat more mindfully, NutriScan provides the tools you need.";
+    
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: isDark ? Colors.black26 : Colors.black.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -706,35 +1284,35 @@ class _NutritionState extends State<Nutrition> {
           Text(
             'About NutriScan',
             style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF2E7D8F),
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white : AppTheme.darkNavy,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // Content text
           Text(
             isReadMoreExpanded ? fullText : shortText,
             style: TextStyle(
               fontSize: 16,
-              color: Colors.grey[700],
+              color: isDark ? Colors.grey[300] : Colors.grey[700],
               height: 1.6,
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
 
           // Read more button
           GestureDetector(
             onTap: _toggleReadMore,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFF2E7D8F).withOpacity(0.1),
+                color: AppTheme.primaryBlue.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: const Color(0xFF2E7D8F).withOpacity(0.3),
+                  color: AppTheme.primaryBlue.withOpacity(0.3),
                 ),
               ),
               child: Row(
@@ -743,17 +1321,18 @@ class _NutritionState extends State<Nutrition> {
                   Text(
                     isReadMoreExpanded ? 'Read Less' : 'Read More',
                     style: const TextStyle(
-                      color: Color(0xFF2E7D8F),
-                      fontWeight: FontWeight.w500,
+                      color: AppTheme.primaryBlue,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 6),
                   Icon(
                     isReadMoreExpanded
-                        ? Icons.keyboard_arrow_up
-                        : Icons.keyboard_arrow_down,
-                    color: const Color(0xFF2E7D8F),
-                    size: 18,
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    color: AppTheme.primaryBlue,
+                    size: 20,
                   ),
                 ],
               ),
@@ -765,29 +1344,30 @@ class _NutritionState extends State<Nutrition> {
   }
 
   // Loading indicator for lazy loading
-  Widget _buildLoadingIndicator() {
+  Widget _buildLoadingIndicator(bool isDark) {
     return Center(
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SizedBox(
-              width: 16,
-              height: 16,
+              width: 20,
+              height: 20,
               child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  const Color(0xFF2E7D8F),
+                strokeWidth: 3,
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  AppTheme.primaryBlue,
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
             Text(
               'Loading more videos...',
               style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
+                color: isDark ? Colors.grey[400] : Colors.grey[600],
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],

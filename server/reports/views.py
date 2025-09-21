@@ -3,9 +3,11 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.core.files.storage import default_storage
+from authentication.models import User
+from .serializers import ReportInstanceSerializer
 from utils.usercheck import authenticate_request
 import os
-from .models import Report, ChatBot
+from .models import Report, ChatBot, ReportInstance
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 import json
@@ -161,3 +163,31 @@ class UserChatBotAPIView(APIView):
         chatbot.save()
 
         return Response({"response": ai_response.content})
+    
+
+
+class UserReportInstancesView(APIView):
+    def post(self, request):
+        email = request.data.get("email")
+        user = None
+
+        if email:  
+            # Agar email diya ho to usse user fetch karo
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            # Agar email nahi diya to request se authenticate karke user nikaalo
+            user = authenticate_request(request, need_user=True)
+            if not user:
+                return Response({"error": "Authentication failed"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Get all report instances of this user
+        instances = ReportInstance.objects.filter(report__user=user)
+        serializer = ReportInstanceSerializer(instances, many=True)
+
+        return Response({
+            "email": user.email,
+            "report_instances": serializer.data
+        }, status=status.HTTP_200_OK)
