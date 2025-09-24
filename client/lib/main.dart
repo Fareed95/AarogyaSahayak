@@ -7,114 +7,77 @@ import 'component/custom_snackbar.dart.dart';
 import 'theme/app_theme.dart';
 import 'layout.dart';
 import 'screens/login_screen.dart';
-import 'screens/voice_agent.dart';
-import 'screens/community_home.dart';
 import 'firebase_options.dart';
 import 'services/secure_storage_service.dart';
 import 'services/info.dart';
+import 'screens/login_screen.dart';
 
 /// 🔙 Background message handler
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+Future<
+  void
+>
+_firebaseMessagingBackgroundHandler(
+  RemoteMessage message,
+) async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  print("Background message received: ${message.messageId}");
+  print(
+    "Background message received: ${message.messageId}",
+  );
 }
 
-void main() async {
+void
+main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
   // Background message registration
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  FirebaseMessaging.onBackgroundMessage(
+    _firebaseMessagingBackgroundHandler,
+  );
 
-  runApp(const HackathonApp());
+  runApp(
+    const HackathonApp(),
+  );
 }
 
-class HackathonApp extends StatefulWidget {
-  const HackathonApp({super.key});
+class HackathonApp
+    extends
+        StatefulWidget {
+  const HackathonApp({
+    super.key,
+  });
 
   @override
-  State<HackathonApp> createState() => _HackathonAppState();
+  State<
+    HackathonApp
+  >
+  createState() => _HackathonAppState();
 }
 
-class _HackathonAppState extends State<HackathonApp> {
+class _HackathonAppState
+    extends
+        State<
+          HackathonApp
+        > {
   bool isDarkMode = false;
-
-
+  Widget? _homeScreen;
 
   @override
   void initState() {
     super.initState();
     _initFCM();
-    _setFCM();
+    _checkAuthentication();
   }
 
-
-
-
-
-
-  Future<void> _setFCM() async {
-    try {
-      FirebaseMessaging messaging = FirebaseMessaging.instance;
-      String? token = await messaging.getToken();
-      bool value = await Info().isLoggedIn();
-      print('User logged in? $value');
-      String? jwtToken = await SecureStorageService().getJwtToken();
-
-      if (jwtToken != null && token != null) {
-        try {
-          // print('JWT Token: $jwtToken');
-          // print('FCM Token: $token');
-          const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/user/';
-          final Map<String, dynamic> requestBody = {'fcm_token': token};
-
-          final response = await http.patch(
-            Uri.parse(apiUrl),
-            headers: <String, String>{
-              'Content-Type': 'application/json; charset=UTF-8',
-              'Authorization': jwtToken,
-            },
-            body: jsonEncode(requestBody),
-          );
-
-          print('Response status: ${response.statusCode}');
-          print('Response body: ${response.body}');
-
-          if (response.statusCode == 200 || response.statusCode == 201) {
-            final responseData = jsonDecode(response.body);
-            print("FCM token updated successfully: $responseData");
-          } else {
-            print("Error updating FCM token. Status: ${response.statusCode}");
-            if (response.body.isNotEmpty) {
-              try {
-                final errorData = jsonDecode(response.body);
-                print("Error details: $errorData");
-              } catch (e) {
-                print("Error response (non-JSON): ${response.body}");
-              }
-            }
-          }
-        } catch (e) {
-          print("Error updating FCM token: $e");
-        }
-      } else {
-        if (jwtToken == null) {
-          print('No JWT token found');
-        }
-        if (token == null) {
-          print('No FCM token found');
-        }
-      }
-    } catch (e) {
-      print("Error in _setFCM: $e");
-    }
-  }
-
-  Future<void> _initFCM() async {
+  /// Initialize FCM
+  Future<
+    void
+  >
+  _initFCM() async {
     try {
       FirebaseMessaging messaging = FirebaseMessaging.instance;
       NotificationSettings settings = await messaging.requestPermission(
@@ -122,28 +85,154 @@ class _HackathonAppState extends State<HackathonApp> {
         badge: true,
         sound: true,
       );
-      print('🔔 User granted permission: ${settings.authorizationStatus}');
+      print(
+        '🔔 User granted permission: ${settings.authorizationStatus}',
+      );
       String? token = await messaging.getToken();
-      print('📱 FCM Token: $token');
-    } catch (e) {
-      print("❌ Error getting FCM token: $e");
+      print(
+        '📱 FCM Token: $token',
+      );
+      _setFCM(
+        token,
+      );
+    } catch (
+      e
+    ) {
+      print(
+        "❌ Error initializing FCM: $e",
+      );
     }
   }
 
+  /// Send FCM token to backend if JWT exists
+  Future<
+    void
+  >
+  _setFCM(
+    String? token,
+  ) async {
+    try {
+      if (token ==
+          null)
+        return;
+      String? jwtToken = await SecureStorageService().getJwtToken();
+      if (jwtToken !=
+          null) {
+        const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/user/';
+        final response = await http.patch(
+          Uri.parse(
+            apiUrl,
+          ),
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Authorization': jwtToken,
+          },
+          body: jsonEncode(
+            {
+              'fcm_token': token,
+            },
+          ),
+        );
+        print(
+          'FCM update status: ${response.statusCode}',
+        );
+        if (response.statusCode ==
+                200 ||
+            response.statusCode ==
+                201) {
+          final data = jsonDecode(
+            response.body,
+          );
+          print(
+            "FCM token updated successfully: $data",
+          );
+        }
+      }
+    } catch (
+      e
+    ) {
+      print(
+        "Error sending FCM token: $e",
+      );
+    }
+  }
+
+  /// Check JWT token and validate user
+  Future<
+    void
+  >
+  _checkAuthentication() async {
+    String? jwtToken = await SecureStorageService().getJwtToken();
+
+    if (jwtToken !=
+        null) {
+      try {
+        final response = await http.get(
+          Uri.parse(
+            'https://codenebula-internal-round-25.onrender.com/api/authentication/user',
+          ),
+          headers: {
+            'Authorization': jwtToken,
+          },
+        );
+
+        if (response.statusCode ==
+            200) {
+          // Token valid → show Layout
+          _homeScreen = Layout(
+            isDarkMode: isDarkMode,
+            onThemeToggle: () {
+              setState(
+                () => isDarkMode = !isDarkMode,
+              );
+            },
+          );
+        } else {
+          // Token invalid → show Login
+          _homeScreen = const login_screen();
+        }
+      } catch (
+        e
+      ) {
+        print(
+          "Error validating JWT: $e",
+        );
+        _homeScreen = const login_screen();
+      }
+    } else {
+      // No token → Login screen
+      _homeScreen = const login_screen();
+    }
+
+    setState(
+      () {},
+    ); // Rebuild to show correct screen
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
+    // While checking auth, show loading
+    if (_homeScreen ==
+        null) {
+      return const MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      );
+    }
+
     return MaterialApp(
-      title: 'Hackathon',
+      title: 'Arogya Sahayak',
       debugShowCheckedModeBanner: false,
-      theme: isDarkMode ? AppTheme.darkTheme : AppTheme.lightTheme,
-      home: Layout(
-        isDarkMode: isDarkMode,
-        onThemeToggle: () {
-          setState(() {
-            isDarkMode = !isDarkMode;
-          });
-        },
-      ),
+      theme: isDarkMode
+          ? AppTheme.darkTheme
+          : AppTheme.lightTheme,
+      home: _homeScreen,
     );
   }
 }

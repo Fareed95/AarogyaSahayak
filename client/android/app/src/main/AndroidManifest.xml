@@ -3,6 +3,9 @@
         android:label="client"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+         <meta-data
+        android:name="io.flutter.embedding.android.ImpellerEnabled"
+        android:value="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
