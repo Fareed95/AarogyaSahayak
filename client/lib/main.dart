@@ -189,7 +189,14 @@ class _HackathonAppState
           );
         } else {
           // Token invalid → show Login
-          _homeScreen = const login_screen();
+          _homeScreen = Layout(
+            isDarkMode: isDarkMode,
+            onThemeToggle: () {
+              setState(
+                    () => isDarkMode = !isDarkMode,
+              );
+            },
+          );
         }
       } catch (
         e
@@ -197,11 +204,25 @@ class _HackathonAppState
         print(
           "Error validating JWT: $e",
         );
-        _homeScreen = const login_screen();
+        _homeScreen = Layout(
+          isDarkMode: isDarkMode,
+          onThemeToggle: () {
+            setState(
+                  () => isDarkMode = !isDarkMode,
+            );
+          },
+        );
       }
     } else {
       // No token → Login screen
-      _homeScreen = const login_screen();
+      _homeScreen = Layout(
+        isDarkMode: isDarkMode,
+        onThemeToggle: () {
+          setState(
+                () => isDarkMode = !isDarkMode,
+          );
+        },
+      );
     }
 
     setState(
