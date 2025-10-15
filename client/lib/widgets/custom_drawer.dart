@@ -3,6 +3,7 @@ import '../screens/Doctor_screen.dart';
 import '../screens/Medical_screen.dart';
 import '../screens/ChatBot_Screen.dart';
 import '../screens/document_chatbot_screen.dart'; // ✅ Import your new screen
+import '../screens/FindHospital_screen.dart'; // ✅ Import the new Find Hospital screen
 
 class CustomDrawer extends StatelessWidget {
   final Function(int) onItemTap;
@@ -88,7 +89,7 @@ class CustomDrawer extends StatelessWidget {
               Navigator.pop(context);
               Future.delayed(
                 const Duration(milliseconds: 250),
-                () {
+                    () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -136,12 +137,12 @@ class CustomDrawer extends StatelessWidget {
               Navigator.pop(context);
               Future.delayed(
                 const Duration(milliseconds: 250),
-                () {
+                    () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
-                          const DocumentChatBotScreen(),
+                      const DocumentChatBotScreen(),
                     ),
                   );
                 },
@@ -187,6 +188,25 @@ class CustomDrawer extends StatelessWidget {
               );
             },
           ),
+
+          // New Special drawer item: Find Hospital
+          _buildSpecialDrawerItem(
+            context,
+            Icons.local_hospital_outlined,
+            Icons.local_hospital,
+            "Find Hospital",
+            isDark,
+            onTapOverride: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const HospitalFinderMaps(),
+                ),
+              );
+            },
+          ),
+
           const SizedBox(height: 20),
         ],
       ),
@@ -195,14 +215,14 @@ class CustomDrawer extends StatelessWidget {
 
   // Regular drawer item
   Widget _buildDrawerItem(
-    BuildContext context,
-    IconData outlinedIcon,
-    IconData filledIcon,
-    String title,
-    int index,
-    bool isDark, {
-    VoidCallback? onTapOverride,
-  }) {
+      BuildContext context,
+      IconData outlinedIcon,
+      IconData filledIcon,
+      String title,
+      int index,
+      bool isDark, {
+        VoidCallback? onTapOverride,
+      }) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       decoration: BoxDecoration(
@@ -236,13 +256,13 @@ class CustomDrawer extends StatelessWidget {
 
   // Special drawer item (Doctor / Medical Store)
   Widget _buildSpecialDrawerItem(
-    BuildContext context,
-    IconData outlinedIcon,
-    IconData filledIcon,
-    String title,
-    bool isDark, {
-    VoidCallback? onTapOverride,
-  }) {
+      BuildContext context,
+      IconData outlinedIcon,
+      IconData filledIcon,
+      String title,
+      bool isDark, {
+        VoidCallback? onTapOverride,
+      }) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       decoration: BoxDecoration(

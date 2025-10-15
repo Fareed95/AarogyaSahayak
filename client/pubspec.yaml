@@ -51,8 +51,11 @@ dependencies:
   record: ^6.0.0
   file_picker: ^8.0.6
   path: ^1.8.2
-
+  google_maps_flutter: ^2.2.3
   timezone: ^0.9.4
+  geolocator: ^11.0.1
+  flutter_google_places_hoc081098: ^2.0.0
+  google_api_headers: ^4.0.3
 dev_dependencies:
   flutter_test:
     sdk: flutter
