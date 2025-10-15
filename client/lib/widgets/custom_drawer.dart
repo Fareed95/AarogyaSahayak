@@ -201,7 +201,7 @@ class CustomDrawer extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const FindHospital_screen(),
+                  builder: (context) => const HospitalFinderMaps(),
                 ),
               );
             },
