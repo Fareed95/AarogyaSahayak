@@ -14,5 +14,6 @@ class ReportInstanceSerializer(serializers.ModelSerializer):
             "address_of_the_doctor",
             "name_of_the_doctor",
             "json",
-            "file"
+            "file",
+            "youtube_videos",
         ]

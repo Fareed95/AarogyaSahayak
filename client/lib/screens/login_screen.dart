@@ -51,7 +51,7 @@ class _LoginPageState
         () => _isLoading = true,
       ); // start loader
       try {
-        const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/authentication/login';
+        const String apiUrl = 'http://192.168.0.107:8000/api/authentication/login';
         final requestBody = {
           'email': _emailController.text.trim(),
           'password': _passwordController.text,

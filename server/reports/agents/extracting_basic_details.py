@@ -1,25 +1,25 @@
 import tempfile
 from PIL import Image
 import fitz
-import google.generativeai as genai
+from dotenv import load_dotenv
+import os
 import re
 import json
 from pydantic import BaseModel
 from typing import List, Optional
-import os
-from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain.schema import HumanMessage
+from google import genai
 
 # ------------------------------
 # Load API key
 # ------------------------------
 load_dotenv()
 google_api_key = os.getenv("GOOGLE_API_KEY")
-genai.configure(api_key=google_api_key)
+client = genai.Client(api_key=google_api_key)
 
 # ------------------------------
-# Pydantic model
+# Pydantic models
 # ------------------------------
 class ReportDetails(BaseModel):
     disease_name: Optional[str] = None
@@ -33,22 +33,8 @@ class PageReport(BaseModel):
     details: ReportDetails
 
 # ------------------------------
-# Gemini config
+# System prompt
 # ------------------------------
-generation_config = {
-    "temperature": 0.7,
-    "top_p": 1,
-    "top_k": 0,
-    "max_output_tokens": 4096,
-}
-
-safety_settings = [
-    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-]
-
 system_prompt = """
 You are a medical report parser. Your task is to extract the following details from a medical report image:
 
@@ -74,12 +60,6 @@ Do NOT explain anything. Do NOT include code blocks. Respond with valid JSON onl
 # ------------------------------
 # Models
 # ------------------------------
-report_model = genai.GenerativeModel(
-    "gemini-1.5-flash",
-    generation_config=generation_config,
-    safety_settings=safety_settings
-)
-
 summary_model = ChatOpenAI(temperature=0.7)
 
 # ------------------------------
@@ -89,8 +69,15 @@ def extract_report_details_from_image(image: Image.Image) -> Optional[ReportDeta
     try:
         with tempfile.NamedTemporaryFile(suffix=".jpeg", delete=True) as tmp_file:
             image.save(tmp_file.name, format="JPEG")
-            uploaded_file = genai.upload_file(path=tmp_file.name)
-            response = report_model.generate_content([system_prompt, uploaded_file])
+
+            # Upload image file to Gemini
+            uploaded_file = client.files.upload(file=tmp_file.name)
+
+            # Generate content using gemini-2.5-flash
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=[system_prompt, uploaded_file]
+            )
 
             if hasattr(response, "text"):
                 clean_text = re.sub(r"```(?:json)?", "", response.text).strip("` \n")
@@ -120,7 +107,8 @@ def extract_report_from_pdf(pdf_path: str) -> List[PageReport]:
 # Generate overall summary
 # ------------------------------
 def generate_report_summary(page_reports: List[PageReport]) -> str:
-    data_for_summary = [r.dict() for r in page_reports]
+    # Pydantic v2: use model_dump() instead of dict()
+    data_for_summary = [r.model_dump() for r in page_reports]
 
     prompt = f"""
     You are a medical report summarizer.
@@ -132,7 +120,8 @@ def generate_report_summary(page_reports: List[PageReport]) -> str:
     mentioning diseases, doctors, hospital info, end status,
     and any follow-up questions. Keep it professional.
     """
-    response = summary_model([HumanMessage(content=prompt)])
+    # Use .invoke() instead of deprecated __call__()
+    response = summary_model.invoke([HumanMessage(content=prompt)])
     return response.content.strip()
 
 # ------------------------------
@@ -143,7 +132,13 @@ if __name__ == "__main__":
     final_results = extract_report_from_pdf(pdf_file)
 
     # Convert Pydantic models to dicts for JSON output
-    output_json = [r.dict() for r in final_results]
+    output_json = [r.model_dump() for r in final_results]
 
     # Print structured JSON
     print(json.dumps(output_json, indent=2))
+
+    # Generate and print human-readable summary
+    summary_text = generate_report_summary(final_results)
+    print("\nOverall Report Summary:\n")
+    print(summary_text)
+

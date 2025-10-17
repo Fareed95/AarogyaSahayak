@@ -1,22 +1,22 @@
 import tempfile
 from PIL import Image
 import fitz
-import google.generativeai as genai
+from dotenv import load_dotenv
+import os
 import re
 import json
 from pydantic import BaseModel
 from typing import List, Optional
-import os
-from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain.schema import HumanMessage
+from google import genai
 
 # ------------------------------
 # Load API key
 # ------------------------------
 load_dotenv()
 google_api_key = os.getenv("GOOGLE_API_KEY")
-genai.configure(api_key=google_api_key)
+client = genai.Client(api_key=google_api_key)
 
 # ------------------------------
 # Pydantic models
@@ -31,22 +31,8 @@ class PageResults(BaseModel):
     tests: List[TestResult]
 
 # ------------------------------
-# Gemini config
+# System prompt for Gemini
 # ------------------------------
-generation_config = {
-    "temperature": 0.9,
-    "top_p": 1,
-    "top_k": 0,
-    "max_output_tokens": 8192,
-}
-
-safety_settings = [
-    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-]
-
 system_prompt = """
 You are a medical report parser. Your task is to extract test values from a medical image.
 
@@ -66,25 +52,22 @@ Respond with valid, parsable JSON only.
 """
 
 # ------------------------------
-# Models
-# ------------------------------
-test_model = genai.GenerativeModel(
-    "gemini-1.5-flash",
-    generation_config=generation_config,
-    safety_settings=safety_settings
-)
-
-summary_model = ChatOpenAI(temperature=0.7)
-
-# ------------------------------
 # Extract from a single image
 # ------------------------------
 def extract_medical_json_from_image(image: Image.Image):
     try:
+        # Save image to temp file
         with tempfile.NamedTemporaryFile(suffix=".jpeg", delete=True) as tmp_file:
             image.save(tmp_file.name, format="JPEG")
-            uploaded_file = genai.upload_file(path=tmp_file.name)
-            response = test_model.generate_content([system_prompt, uploaded_file])
+
+            # Upload file using new method
+            uploaded_file = client.files.upload(file=tmp_file.name)
+
+            # Send prompt + uploaded file to Gemini
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=[system_prompt, uploaded_file]
+            )
 
             if hasattr(response, "text"):
                 clean_text = re.sub(r"```(?:json)?", "", response.text).strip("` \n")
@@ -113,11 +96,12 @@ def extract_medical_from_pdf(pdf_path: str) -> List[PageResults]:
 # ------------------------------
 # Generate overall summary
 # ------------------------------
-def generate_report_summary(page_results: List[PageResults]) -> str:
-    # Convert PageResults to JSON string
-    data_for_summary = [r.dict() for r in page_results]
+summary_model = ChatOpenAI(temperature=0.7)
 
-    # Large PDF? -> chunk pages
+def generate_report_summary(page_results: List[PageResults]) -> str:
+    # Use model_dump() instead of deprecated dict()
+    data_for_summary = [r.model_dump() for r in page_results]
+
     CHUNK_SIZE = 5
     all_chunks = [data_for_summary[i:i+CHUNK_SIZE] for i in range(0, len(data_for_summary), CHUNK_SIZE)]
     summaries = []
@@ -134,10 +118,10 @@ def generate_report_summary(page_results: List[PageResults]) -> str:
         and any recommendations if applicable.
         Keep the tone professional.
         """
-        response = summary_model([HumanMessage(content=prompt)])
+        # Use .invoke() instead of deprecated __call__()
+        response = summary_model.invoke([HumanMessage(content=prompt)])
         summaries.append(response.content.strip())
 
-    # Combine chunk summaries
     final_summary = "\n\n".join(summaries)
     return final_summary
 
@@ -148,7 +132,8 @@ if __name__ == "__main__":
     pdf_file = "test.pdf"
     final_results = extract_medical_from_pdf(pdf_file)
     print("Extracted Page Results:")
-    print([r.dict() for r in final_results])
+    # Use model_dump() instead of dict()
+    print([r.model_dump() for r in final_results])
 
     summary_text = generate_report_summary(final_results)
     print("\nOverall Report Summary:\n")

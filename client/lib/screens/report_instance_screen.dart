@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../services/secure_storage_service.dart';
+import 'youtube_videos_screen.dart';
 
 class ReportInstancesScreen
     extends
@@ -50,7 +51,7 @@ class _ReportInstancesScreenState
 
       final response = await http.get(
         Uri.parse(
-          'https://codenebula-internal-round-25.onrender.com/api/reports/get_user_instances/',
+          'http://192.168.0.107:8000/api/reports/get_user_instances/',
         ),
         headers: {
           'Content-Type': 'application/json',
@@ -163,6 +164,25 @@ class _ReportInstancesScreenState
                         subtitle: Text(
                           report['name_of_the_doctor'] ??
                               '',
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(
+                            Icons.video_library,
+                            color: Colors.red,
+                          ),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (
+                                      context,
+                                    ) => YouTubeVideosScreen(
+                                      pk: report['id'],
+                                    ),
+                              ),
+                            );
+                          },
                         ),
                         onTap: () {
                           showSummaryDialog(

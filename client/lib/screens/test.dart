@@ -151,7 +151,7 @@ class _HomeScreenState
   >
   _getUserData() async {
     try {
-      const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/authentication/user';
+      const String apiUrl = 'http://192.168.0.107:8000/api/authentication/user';
 
       var token = await SecureStorageService().getJwtToken();
 
@@ -327,7 +327,7 @@ class _HomeScreenState
 
       // 4. Create Multipart Request
       var uri = Uri.parse(
-        "http://192.168.0.107:8000/api/reports/report/",
+        "http://192.168.0.107:8000:8000/api/reports/report/",
       );
       var request = http.MultipartRequest(
         "POST",
@@ -524,7 +524,7 @@ class _HomeScreenState
                                     DropdownButtonFormField<
                                       String
                                     >(
-                                      value: selectedRegion,
+                                      initialValue: selectedRegion,
                                       items:
                                           <
                                                 String

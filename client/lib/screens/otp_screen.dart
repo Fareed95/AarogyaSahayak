@@ -1,22 +1,50 @@
 import 'package:flutter/material.dart';
-import '../screens/otp_screen.dart';
 import '../component/custom_snackbar.dart.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../services/secure_storage_service.dart';
 import '../services/info.dart';
-class OtpScreen extends StatefulWidget {
+
+class OtpScreen
+    extends
+        StatefulWidget {
   final String email;
 
-  const OtpScreen({super.key, required this.email});
+  const OtpScreen({
+    super.key,
+    required this.email,
+  });
 
   @override
-  State<OtpScreen> createState() => _OtpScreenState();
+  State<
+    OtpScreen
+  >
+  createState() => _OtpScreenState();
 }
 
-class _OtpScreenState extends State<OtpScreen> {
-  final List<TextEditingController> _otpControllers = List.generate(6, (index) => TextEditingController());
-  final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
+class _OtpScreenState
+    extends
+        State<
+          OtpScreen
+        > {
+  final List<
+    TextEditingController
+  >
+  _otpControllers = List.generate(
+    6,
+    (
+      index,
+    ) => TextEditingController(),
+  );
+  final List<
+    FocusNode
+  >
+  _focusNodes = List.generate(
+    6,
+    (
+      index,
+    ) => FocusNode(),
+  );
   bool _isLoading = false;
   bool _isResending = false;
   int _countdown = 60;
@@ -25,163 +53,331 @@ class _OtpScreenState extends State<OtpScreen> {
   void initState() {
     super.initState();
     _startCountdown();
-    print('Received email: ${widget.email}');
-    print('Email is empty: ${widget.email.isEmpty}');
+    print(
+      'Received email: ${widget.email}',
+    );
+    print(
+      'Email is empty: ${widget.email.isEmpty}',
+    );
     // Set up focus node listeners for auto-moving between OTP fields
-    for (int i = 0; i < _focusNodes.length; i++) {
-      _focusNodes[i].addListener(() {
-        if (!_focusNodes[i].hasFocus && i < _focusNodes.length - 1) {
-          FocusScope.of(context).requestFocus(_focusNodes[i + 1]);
-        }
-      });
+    for (
+      int i = 0;
+      i <
+          _focusNodes.length;
+      i++
+    ) {
+      _focusNodes[i].addListener(
+        () {
+          if (!_focusNodes[i].hasFocus &&
+              i <
+                  _focusNodes.length -
+                      1) {
+            FocusScope.of(
+              context,
+            ).requestFocus(
+              _focusNodes[i +
+                  1],
+            );
+          }
+        },
+      );
     }
   }
 
   void _startCountdown() {
     // Start a 60-second countdown for resend OTP
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted && _countdown > 0) {
-        setState(() => _countdown--);
-        _startCountdown();
-      }
-    });
+    Future.delayed(
+      const Duration(
+        seconds: 1,
+      ),
+      () {
+        if (mounted &&
+            _countdown >
+                0) {
+          setState(
+            () => _countdown--,
+          );
+          _startCountdown();
+        }
+      },
+    );
   }
 
-  Future<void> _verifyOtp() async {
-    String otp = _otpControllers.map((controller) => controller.text).join();
+  Future<
+    void
+  >
+  _verifyOtp() async {
+    String otp = _otpControllers
+        .map(
+          (
+            controller,
+          ) => controller.text,
+        )
+        .join();
 
-    if (otp.length != 6) {
-      AwesomeSnackbar.error(context, "Invalid OTP", "Please enter the 6-digit code");
+    if (otp.length !=
+        6) {
+      AwesomeSnackbar.error(
+        context,
+        "Invalid OTP",
+        "Please enter the 6-digit code",
+      );
       return;
     }
 
-    setState(() => _isLoading = true);
+    setState(
+      () => _isLoading = true,
+    );
 
     try {
       // API endpoint for OTP verification
-      const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/authentication/register';
+      const String apiUrl = 'http://192.168.0.107:8000/api/authentication/register';
 
       // Prepare the request body
-      final Map<String, dynamic> requestBody = {
+      final Map<
+        String,
+        dynamic
+      >
+      requestBody = {
         'email': widget.email,
         'otp': otp,
       };
-      print(otp);
-      print(widget.email);
+      print(
+        otp,
+      );
+      print(
+        widget.email,
+      );
       // Make POST request
       final response = await http.put(
-        Uri.parse(apiUrl),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(requestBody),
+        Uri.parse(
+          apiUrl,
+        ),
+        headers:
+            <
+              String,
+              String
+            >{
+              'Content-Type': 'application/json; charset=UTF-8',
+            },
+        body: jsonEncode(
+          requestBody,
+        ),
       );
 
       // Handle response
-      if (response.statusCode == 200) {
+      if (response.statusCode ==
+          200) {
         // Success
-        final responseData = jsonDecode(response.body);
+        final responseData = jsonDecode(
+          response.body,
+        );
         // print(responseData['jwt']);
-        if (responseData.containsKey('jwt')) {
-
+        if (responseData.containsKey(
+          'jwt',
+        )) {
           try {
-          await SecureStorageService().storeJwtToken(responseData['jwt']);
-          print('JWT token stored securely');
-          Info().setLoggedIn(true);
-        } catch (e) {
-          print('Error storing token: $e');
-          AwesomeSnackbar.error(context, "Storage Error", "Could not save login information");
-        }}
-        AwesomeSnackbar.success(context, "Verification Success", "Your account has been verified!");
-        Navigator.pop(context);
+            await SecureStorageService().storeJwtToken(
+              responseData['jwt'],
+            );
+            print(
+              'JWT token stored securely',
+            );
+            Info().setLoggedIn(
+              true,
+            );
+          } catch (
+            e
+          ) {
+            print(
+              'Error storing token: $e',
+            );
+            AwesomeSnackbar.error(
+              context,
+              "Storage Error",
+              "Could not save login information",
+            );
+          }
+        }
+        AwesomeSnackbar.success(
+          context,
+          "Verification Success",
+          "Your account has been verified!",
+        );
+        Navigator.pop(
+          context,
+        );
         // Navigate to the home screen or next step
         // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomeScreen()));
       } else {
         // Error
-        final errorData = jsonDecode(response.body);
-        print(errorData);
-        AwesomeSnackbar.error(context, "Verification Failed", errorData['message'] ?? 'Invalid OTP code');
+        final errorData = jsonDecode(
+          response.body,
+        );
+        print(
+          errorData,
+        );
+        AwesomeSnackbar.error(
+          context,
+          "Verification Failed",
+          errorData['message'] ??
+              'Invalid OTP code',
+        );
       }
-    } catch (error) {
+    } catch (
+      error
+    ) {
       // Network or other errors
-      print(error);
-      AwesomeSnackbar.error(context, "Error", "Network error. Please try again.");
+      print(
+        error,
+      );
+      AwesomeSnackbar.error(
+        context,
+        "Error",
+        "Network error. Please try again.",
+      );
     } finally {
-      setState(() => _isLoading = false);
+      setState(
+        () => _isLoading = false,
+      );
     }
   }
 
-  Future<void> _resendOtp() async {
-    try{
-      const String apiUrl='https://codenebula-internal-round-25.onrender.com/api/authentication/resendotp/';
-      final Map<String,dynamic>reqbody={
-        'email':widget.email
+  Future<
+    void
+  >
+  _resendOtp() async {
+    try {
+      const String apiUrl = 'http://192.168.0.107:8000/api/authentication/resendotp/';
+      final Map<
+        String,
+        dynamic
+      >
+      reqbody = {
+        'email': widget.email,
       };
       final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(reqbody),
-
+        Uri.parse(
+          apiUrl,
+        ),
+        headers:
+            <
+              String,
+              String
+            >{
+              'Content-Type': 'application/json; charset=UTF-8',
+            },
+        body: jsonEncode(
+          reqbody,
+        ),
       );
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.statusCode ==
+              200 ||
+          response.statusCode ==
+              201) {
         // Success
-        final responseData = jsonDecode(response.body);
-        print(responseData);
+        final responseData = jsonDecode(
+          response.body,
+        );
+        print(
+          responseData,
+        );
         AwesomeSnackbar.success(
-            context,
-            "OTP Resent Successful",
-            "Please check your email for the verification code"
+          context,
+          "OTP Resent Successful",
+          "Please check your email for the verification code",
         );
       }
-    } catch(error){
-      print(error);
+    } catch (
+      error
+    ) {
+      print(
+        error,
+      );
       AwesomeSnackbar.error(
-          context,
-          "Network Error",
-          "Please check your internet connection and try again");
+        context,
+        "Network Error",
+        "Please check your internet connection and try again",
+      );
     }
-    setState(() {
-      _isResending = true;
-      _countdown = 60;
-    });
+    setState(
+      () {
+        _isResending = true;
+        _countdown = 60;
+      },
+    );
 
     try {
       // API endpoint for resending OTP
-      const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/authentication/resendotp';
+      const String apiUrl = 'http://192.168.0.107:8000/api/authentication/resendotp';
 
       // Prepare the request body
-      final Map<String, dynamic> requestBody = {
+      final Map<
+        String,
+        dynamic
+      >
+      requestBody = {
         'email': widget.email,
       };
 
       // Make POST request
       final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(requestBody),
+        Uri.parse(
+          apiUrl,
+        ),
+        headers:
+            <
+              String,
+              String
+            >{
+              'Content-Type': 'application/json; charset=UTF-8',
+            },
+        body: jsonEncode(
+          requestBody,
+        ),
       );
 
       // Handle response
-      if (response.statusCode == 200) {
+      if (response.statusCode ==
+          200) {
         // Success
-        AwesomeSnackbar.success(context, "OTP Sent", "A new verification code has been sent to your email");
+        AwesomeSnackbar.success(
+          context,
+          "OTP Sent",
+          "A new verification code has been sent to your email",
+        );
         _startCountdown();
       } else {
         // Error
-        final errorData = jsonDecode(response.body);
-        print(errorData);
-        AwesomeSnackbar.error(context, "Error", errorData['message'] ?? 'Failed to resend OTP');
+        final errorData = jsonDecode(
+          response.body,
+        );
+        print(
+          errorData,
+        );
+        AwesomeSnackbar.error(
+          context,
+          "Error",
+          errorData['message'] ??
+              'Failed to resend OTP',
+        );
       }
-    } catch (error) {
+    } catch (
+      error
+    ) {
       // Network or other errors
-      print(error);
-      AwesomeSnackbar.error(context, "Error", "Network error. Please try again.");
+      print(
+        error,
+      );
+      AwesomeSnackbar.error(
+        context,
+        "Error",
+        "Network error. Please try again.",
+      );
     } finally {
-      setState(() => _isResending = false);
+      setState(
+        () => _isResending = false,
+      );
     }
   }
 
@@ -197,29 +393,43 @@ class _OtpScreenState extends State<OtpScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Verify Email'),
+        title: const Text(
+          'Verify Email',
+        ),
         backgroundColor: Colors.blue.shade700,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(
+            24.0,
+          ),
           child: Column(
             children: [
-              const SizedBox(height: 40),
+              const SizedBox(
+                height: 40,
+              ),
               // App Logo and Title
               _buildHeader(),
-              const SizedBox(height: 32),
+              const SizedBox(
+                height: 32,
+              ),
               // OTP Form
               _buildOtpForm(),
-              const SizedBox(height: 32),
+              const SizedBox(
+                height: 32,
+              ),
               // Verify Button
               _buildVerifyButton(),
-              const SizedBox(height: 24),
+              const SizedBox(
+                height: 24,
+              ),
               // Resend OTP Link
               _buildResendLink(),
             ],
@@ -238,7 +448,10 @@ class _OtpScreenState extends State<OtpScreen> {
           decoration: BoxDecoration(
             color: Colors.blue.shade50,
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.blue.shade200, width: 2),
+            border: Border.all(
+              color: Colors.blue.shade200,
+              width: 2,
+            ),
           ),
           child: Icon(
             Icons.verified_user,
@@ -246,7 +459,9 @@ class _OtpScreenState extends State<OtpScreen> {
             color: Colors.blue.shade700,
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(
+          height: 24,
+        ),
         Text(
           'VERIFICATION',
           style: TextStyle(
@@ -256,7 +471,9 @@ class _OtpScreenState extends State<OtpScreen> {
             letterSpacing: 1.2,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(
+          height: 16,
+        ),
         Text(
           'Enter the 6-digit code sent to',
           style: TextStyle(
@@ -264,7 +481,9 @@ class _OtpScreenState extends State<OtpScreen> {
             color: Colors.grey.shade600,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(
+          height: 4,
+        ),
         Text(
           widget.email,
           style: TextStyle(
@@ -283,50 +502,79 @@ class _OtpScreenState extends State<OtpScreen> {
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: List.generate(6, (index) {
-            return SizedBox(
-              width: 45,
-              child: TextFormField(
-                controller: _otpControllers[index],
-                focusNode: _focusNodes[index],
-                textAlign: TextAlign.center,
-                keyboardType: TextInputType.number,
-                maxLength: 1,
-                decoration: InputDecoration(
-                  counterText: '',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.blue.shade200),
+          children: List.generate(
+            6,
+            (
+              index,
+            ) {
+              return SizedBox(
+                width: 45,
+                child: TextFormField(
+                  controller: _otpControllers[index],
+                  focusNode: _focusNodes[index],
+                  textAlign: TextAlign.center,
+                  keyboardType: TextInputType.number,
+                  maxLength: 1,
+                  decoration: InputDecoration(
+                    counterText: '',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        12,
+                      ),
+                      borderSide: BorderSide(
+                        color: Colors.blue.shade200,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        12,
+                      ),
+                      borderSide: BorderSide(
+                        color: Colors.blue.shade600,
+                        width: 2,
+                      ),
+                    ),
                   ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.blue.shade600, width: 2),
-                  ),
-                ),
-                onChanged: (value) {
-                  if (value.length == 1 && index < 5) {
-                    FocusScope.of(context).requestFocus(_focusNodes[index + 1]);
-                  }
+                  onChanged:
+                      (
+                        value,
+                      ) {
+                        if (value.length ==
+                                1 &&
+                            index <
+                                5) {
+                          FocusScope.of(
+                            context,
+                          ).requestFocus(
+                            _focusNodes[index +
+                                1],
+                          );
+                        }
 
-                  // Auto-submit when all fields are filled
-                  if (index == 5 && value.isNotEmpty) {
-                    bool allFilled = true;
-                    for (var controller in _otpControllers) {
-                      if (controller.text.isEmpty) {
-                        allFilled = false;
-                        break;
-                      }
-                    }
-                    if (allFilled) {
-                      _verifyOtp();
-                    }
-                  }
-                },
-              ),
-            );
-          }),
+                        // Auto-submit when all fields are filled
+                        if (index ==
+                                5 &&
+                            value.isNotEmpty) {
+                          bool allFilled = true;
+                          for (var controller in _otpControllers) {
+                            if (controller.text.isEmpty) {
+                              allFilled = false;
+                              break;
+                            }
+                          }
+                          if (allFilled) {
+                            _verifyOtp();
+                          }
+                        }
+                      },
+                ),
+              );
+            },
+          ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(
+          height: 20,
+        ),
         Text(
           'Didn\'t receive the code?',
           style: TextStyle(
@@ -342,55 +590,64 @@ class _OtpScreenState extends State<OtpScreen> {
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
-        onPressed: _isLoading ? null : _verifyOtp,
+        onPressed: _isLoading
+            ? null
+            : _verifyOtp,
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.blue.shade700,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(
+              12,
+            ),
           ),
           elevation: 2,
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.symmetric(
+            vertical: 16,
+          ),
         ),
         child: _isLoading
             ? const SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation(Colors.white),
-          ),
-        )
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation(
+                    Colors.white,
+                  ),
+                ),
+              )
             : const Text(
-          'Verify',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+                'Verify',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
       ),
     );
   }
 
   Widget _buildResendLink() {
-    return _countdown > 0
+    return _countdown >
+            0
         ? Text(
-      'Resend code in $_countdown seconds',
-      style: TextStyle(
-        color: Colors.grey.shade600,
-      ),
-    )
+            'Resend code in $_countdown seconds',
+            style: TextStyle(
+              color: Colors.grey.shade600,
+            ),
+          )
         : _isResending
         ? const CircularProgressIndicator()
         : TextButton(
-      onPressed: _resendOtp,
-      child: Text(
-        'Resend Verification Code',
-        style: TextStyle(
-          color: Colors.blue.shade700,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
+            onPressed: _resendOtp,
+            child: Text(
+              'Resend Verification Code',
+              style: TextStyle(
+                color: Colors.blue.shade700,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          );
   }
 }

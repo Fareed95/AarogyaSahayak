@@ -28,7 +28,7 @@ def authenticate_request(request, need_user=False):
         raise AuthenticationFailed('User not found!')
 
     # 🔑 Session ID check (important for single device login)
-    if user.session_id != payload.get('session_id'):
-        raise AuthenticationFailed('Session invalid — logged in from another device!')
+    # if user.session_id != payload.get('session_id'):
+    #     raise AuthenticationFailed('Session invalid — logged in from another device!')
 
     return user

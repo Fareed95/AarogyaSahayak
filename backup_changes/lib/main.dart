@@ -12,14 +12,22 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 /// 🔙 Background message handler
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+Future<
+  void
+>
+_firebaseMessagingBackgroundHandler(
+  RemoteMessage message,
+) async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  print("Background message received: ${message.messageId}");
+  print(
+    "Background message received: ${message.messageId}",
+  );
 }
 
-void main() async {
+void
+main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(
@@ -27,18 +35,33 @@ void main() async {
   );
 
   // Background message registration
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  runApp(const HackathonApp());
+  FirebaseMessaging.onBackgroundMessage(
+    _firebaseMessagingBackgroundHandler,
+  );
+  runApp(
+    const HackathonApp(),
+  );
 }
 
-class HackathonApp extends StatefulWidget {
-  const HackathonApp({super.key});
+class HackathonApp
+    extends
+        StatefulWidget {
+  const HackathonApp({
+    super.key,
+  });
 
   @override
-  State<HackathonApp> createState() => _HackathonAppState();
+  State<
+    HackathonApp
+  >
+  createState() => _HackathonAppState();
 }
 
-class _HackathonAppState extends State<HackathonApp> {
+class _HackathonAppState
+    extends
+        State<
+          HackathonApp
+        > {
   bool isDarkMode = false;
 
   @override
@@ -48,48 +71,88 @@ class _HackathonAppState extends State<HackathonApp> {
     _setFCM();
   }
 
-  Future<void> _setFCM() async {
+  Future<
+    void
+  >
+  _setFCM() async {
     FirebaseMessaging messaging = FirebaseMessaging.instance;
     String? token = await messaging.getToken();
     var value = await Info().isLoggedIn();
-    print('User logged in? $value');
+    print(
+      'User logged in? $value',
+    );
     String? jwtToken = await SecureStorageService().getJwtToken();
 
-    if (jwtToken != null) {
+    if (jwtToken !=
+        null) {
       try {
         // API endpoint
-        const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/user/';
-        final Map<String, dynamic> requestBody = {'fcm_token': token};
-
+        const String apiUrl = 'http://192.168.0.107:8000/api/user/';
+        final Map<
+          String,
+          dynamic
+        >
+        requestBody = {
+          'fcm_token': token,
+        };
 
         final response = await http.patch(
-          Uri.parse(apiUrl),
-          headers: <String, String>{
-            'Content-Type': 'application/json; charset=UTF-8',
-            'Authorization': jwtToken
-          },
-          body: jsonEncode(requestBody),
+          Uri.parse(
+            apiUrl,
+          ),
+          headers:
+              <
+                String,
+                String
+              >{
+                'Content-Type': 'application/json; charset=UTF-8',
+                'Authorization': jwtToken,
+              },
+          body: jsonEncode(
+            requestBody,
+          ),
         );
 
-        if (response.statusCode == 200 || response.statusCode == 201) {
-          final responseData = jsonDecode(response.body);
-          print(responseData);
+        if (response.statusCode ==
+                200 ||
+            response.statusCode ==
+                201) {
+          final responseData = jsonDecode(
+            response.body,
+          );
+          print(
+            responseData,
+          );
 
-
-          print("FCM token updated successfully: $responseData");
+          print(
+            "FCM token updated successfully: $responseData",
+          );
         } else {
-          final errorData = jsonDecode(response.body);
-          print("Error updating FCM token: $errorData");
+          final errorData = jsonDecode(
+            response.body,
+          );
+          print(
+            "Error updating FCM token: $errorData",
+          );
         }
-      } catch (error) {
-        print("Network or other error: $error");
+      } catch (
+        error
+      ) {
+        print(
+          "Network or other error: $error",
+        );
       }
     } else {
-      print('No JWT token found');
+      print(
+        'No JWT token found',
+      );
     }
   }
 
-  Future<void> _initFCM() async {
+  Future<
+    void
+  >
+  _initFCM() async {
     try {
       FirebaseMessaging messaging = FirebaseMessaging.instance;
 
@@ -99,20 +162,32 @@ class _HackathonAppState extends State<HackathonApp> {
         sound: true,
       );
 
-      print('🔔 User granted permission: ${settings.authorizationStatus}');
+      print(
+        '🔔 User granted permission: ${settings.authorizationStatus}',
+      );
       String? token = await messaging.getToken();
-      print('FCM Token: $token');
-    } catch (e) {
-      print("❌ Error getting FCM token: $e");
+      print(
+        'FCM Token: $token',
+      );
+    } catch (
+      e
+    ) {
+      print(
+        "❌ Error getting FCM token: $e",
+      );
     }
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return MaterialApp(
       title: 'hackathon',
       debugShowCheckedModeBanner: false,
-      theme: isDarkMode ? AppTheme.darkTheme : AppTheme.lightTheme,
+      theme: isDarkMode
+          ? AppTheme.darkTheme
+          : AppTheme.lightTheme,
       home: Scaffold(
         body: Column(
           children: [
@@ -120,13 +195,14 @@ class _HackathonAppState extends State<HackathonApp> {
               child: Layout(
                 isDarkMode: isDarkMode,
                 onThemeToggle: () {
-                  setState(() {
-                    isDarkMode = !isDarkMode;
-                  });
+                  setState(
+                    () {
+                      isDarkMode = !isDarkMode;
+                    },
+                  );
                 },
               ),
             ),
-
           ],
         ),
       ),

@@ -51,7 +51,7 @@ class _ForgotPasswordPageState
     void
   >
   _resend() async {
-    const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/authentication/resendotp';
+    const String apiUrl = 'http://192.168.0.107:8000/api/authentication/resendotp';
 
     final Map<
       String,
@@ -133,7 +133,7 @@ class _ForgotPasswordPageState
         () => _isLoading = true,
       );
 
-      const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/authentication/password-reset-request/';
+      const String apiUrl = 'http://192.168.0.107:8000/api/authentication/password-reset-request/';
 
       final Map<
         String,
@@ -218,7 +218,7 @@ class _ForgotPasswordPageState
         () => _isLoading = true,
       );
 
-      const String apiUrl = 'http://192.168.0.107:8000/api/authentication/password-reset/';
+      const String apiUrl = 'http://192.168.0.107:8000:8000/api/authentication/password-reset/';
 
       final Map<
         String,

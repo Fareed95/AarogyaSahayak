@@ -118,7 +118,7 @@ class _HackathonAppState
       String? jwtToken = await SecureStorageService().getJwtToken();
       if (jwtToken !=
           null) {
-        const String apiUrl = 'https://codenebula-internal-round-25.onrender.com/api/user/';
+        const String apiUrl = 'http://192.168.0.107:8000/api/user/';
         final response = await http.patch(
           Uri.parse(
             apiUrl,
@@ -169,7 +169,7 @@ class _HackathonAppState
       try {
         final response = await http.get(
           Uri.parse(
-            'https://codenebula-internal-round-25.onrender.com/api/authentication/user',
+            'http://192.168.0.107:8000/api/authentication/user',
           ),
           headers: {
             'Authorization': jwtToken,
@@ -193,7 +193,7 @@ class _HackathonAppState
             isDarkMode: isDarkMode,
             onThemeToggle: () {
               setState(
-                    () => isDarkMode = !isDarkMode,
+                () => isDarkMode = !isDarkMode,
               );
             },
           );
@@ -208,7 +208,7 @@ class _HackathonAppState
           isDarkMode: isDarkMode,
           onThemeToggle: () {
             setState(
-                  () => isDarkMode = !isDarkMode,
+              () => isDarkMode = !isDarkMode,
             );
           },
         );
@@ -219,7 +219,7 @@ class _HackathonAppState
         isDarkMode: isDarkMode,
         onThemeToggle: () {
           setState(
-                () => isDarkMode = !isDarkMode,
+            () => isDarkMode = !isDarkMode,
           );
         },
       );

@@ -4,15 +4,29 @@ import 'dart:convert';
 import '../../services/secure_storage_service.dart';
 import '../component/custom_snackbar.dart.dart';
 
-class NotificationScreen extends StatefulWidget {
-  const NotificationScreen({super.key});
+class NotificationScreen
+    extends
+        StatefulWidget {
+  const NotificationScreen({
+    super.key,
+  });
 
   @override
-  State<NotificationScreen> createState() => _NotificationScreenState();
+  State<
+    NotificationScreen
+  >
+  createState() => _NotificationScreenState();
 }
 
-class _NotificationScreenState extends State<NotificationScreen> {
-  final _formKey = GlobalKey<FormState>();
+class _NotificationScreenState
+    extends
+        State<
+          NotificationScreen
+        > {
+  final _formKey =
+      GlobalKey<
+        FormState
+      >();
   final _titleController = TextEditingController();
   final _bodyController = TextEditingController();
 
@@ -26,50 +40,77 @@ class _NotificationScreenState extends State<NotificationScreen> {
     super.dispose();
   }
 
-  Future<void> _sendNotification() async {
+  Future<
+    void
+  >
+  _sendNotification() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-        _isSent = false;
-      });
+      setState(
+        () {
+          _isLoading = true;
+          _isSent = false;
+        },
+      );
 
       try {
         // Get JWT token for authentication
         String? jwtToken = await SecureStorageService().getJwtToken();
-        if (jwtToken == null) {
+        if (jwtToken ==
+            null) {
           return;
         }
 
         // Prepare the request body
-        final Map<String, dynamic> requestBody = {
+        final Map<
+          String,
+          dynamic
+        >
+        requestBody = {
           'title': _titleController.text.trim(),
           'body': _bodyController.text.trim(),
         };
 
         // Make POST request
         final response = await http.post(
-          Uri.parse('https://codenebula-internal-round-25.onrender.com/api/notification/'),
-          headers: <String, String>{
-            'Content-Type': 'application/json; charset=UTF-8',
-            'Authorization': jwtToken,
-          },
-          body: jsonEncode(requestBody),
+          Uri.parse(
+            'http://192.168.0.107:8000/api/notification/',
+          ),
+          headers:
+              <
+                String,
+                String
+              >{
+                'Content-Type': 'application/json; charset=UTF-8',
+                'Authorization': jwtToken,
+              },
+          body: jsonEncode(
+            requestBody,
+          ),
         );
 
         // Handle response
-        if (response.statusCode == 200 || response.statusCode == 201) {
+        if (response.statusCode ==
+                200 ||
+            response.statusCode ==
+                201) {
           // Success
-          final responseData = jsonDecode(response.body);
-          print('Notification sent successfully: $responseData');
+          final responseData = jsonDecode(
+            response.body,
+          );
+          print(
+            'Notification sent successfully: $responseData',
+          );
 
-          setState(() {
-            _isSent = true;
-          });
+          setState(
+            () {
+              _isSent = true;
+            },
+          );
 
           AwesomeSnackbar.success(
-              context,
-              "Notification Sent",
-              "All users will get notifications"
+            context,
+            "Notification Sent",
+            "All users will get notifications",
           );
 
           // Clear form after successful send
@@ -77,43 +118,62 @@ class _NotificationScreenState extends State<NotificationScreen> {
           _bodyController.clear();
         } else {
           // Error
-          final errorData = jsonDecode(response.body);
-          print('Error sending notification: $errorData');
+          final errorData = jsonDecode(
+            response.body,
+          );
+          print(
+            'Error sending notification: $errorData',
+          );
 
           String errorMessage = 'Failed to send notification';
-          if (errorData.containsKey('message')) {
+          if (errorData.containsKey(
+            'message',
+          )) {
             errorMessage = errorData['message'];
-          } else if (errorData.containsKey('error')) {
+          } else if (errorData.containsKey(
+            'error',
+          )) {
             errorMessage = errorData['error'];
           }
-
         }
-      } catch (error) {
+      } catch (
+        error
+      ) {
         // Network or other errors
-        print('Exception sending notification: $error');
-        AwesomeSnackbar.error(context, "Didn't send Notification", 'Network error. Please check your connection and try again.');
+        print(
+          'Exception sending notification: $error',
+        );
+        AwesomeSnackbar.error(
+          context,
+          "Didn't send Notification",
+          'Network error. Please check your connection and try again.',
+        );
       } finally {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(
+          () {
+            _isLoading = false;
+          },
+        );
       }
     }
   }
 
-
-
-
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Send Notification'),
+        title: const Text(
+          'Send Notification',
+        ),
         backgroundColor: Colors.blue.shade700,
         foregroundColor: Colors.white,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(
+          20.0,
+        ),
         child: Form(
           key: _formKey,
           child: Column(
@@ -122,17 +182,30 @@ class _NotificationScreenState extends State<NotificationScreen> {
               // Success message
               if (_isSent)
                 Container(
-                  padding: const EdgeInsets.all(12),
-                  margin: const EdgeInsets.only(bottom: 20),
+                  padding: const EdgeInsets.all(
+                    12,
+                  ),
+                  margin: const EdgeInsets.only(
+                    bottom: 20,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.green.shade50,
-                    border: Border.all(color: Colors.green.shade200),
-                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Colors.green.shade200,
+                    ),
+                    borderRadius: BorderRadius.circular(
+                      8,
+                    ),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.check_circle, color: Colors.green.shade600),
-                      const SizedBox(width: 10),
+                      Icon(
+                        Icons.check_circle,
+                        color: Colors.green.shade600,
+                      ),
+                      const SizedBox(
+                        width: 10,
+                      ),
                       Expanded(
                         child: Text(
                           'Notification sent successfully!',
@@ -151,26 +224,44 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 controller: _titleController,
                 decoration: InputDecoration(
                   labelText: 'Notification Title',
-                  prefixIcon: Icon(Icons.title, color: Colors.blue.shade600),
+                  prefixIcon: Icon(
+                    Icons.title,
+                    color: Colors.blue.shade600,
+                  ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(
+                      12,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.blue.shade600, width: 2),
+                    borderRadius: BorderRadius.circular(
+                      12,
+                    ),
+                    borderSide: BorderSide(
+                      color: Colors.blue.shade600,
+                      width: 2,
+                    ),
                   ),
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a title';
-                  }
-                  if (value.length < 3) {
-                    return 'Title must be at least 3 characters';
-                  }
-                  return null;
-                },
+                validator:
+                    (
+                      value,
+                    ) {
+                      if (value ==
+                              null ||
+                          value.isEmpty) {
+                        return 'Please enter a title';
+                      }
+                      if (value.length <
+                          3) {
+                        return 'Title must be at least 3 characters';
+                      }
+                      return null;
+                    },
               ),
-              const SizedBox(height: 20),
+              const SizedBox(
+                height: 20,
+              ),
 
               // Body Field
               TextFormField(
@@ -179,69 +270,104 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 decoration: InputDecoration(
                   labelText: 'Notification Message',
                   alignLabelWithHint: true,
-                  prefixIcon: Icon(Icons.message, color: Colors.blue.shade600),
+                  prefixIcon: Icon(
+                    Icons.message,
+                    color: Colors.blue.shade600,
+                  ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(
+                      12,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.blue.shade600, width: 2),
+                    borderRadius: BorderRadius.circular(
+                      12,
+                    ),
+                    borderSide: BorderSide(
+                      color: Colors.blue.shade600,
+                      width: 2,
+                    ),
                   ),
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a message';
-                  }
-                  if (value.length < 5) {
-                    return 'Message must be at least 5 characters';
-                  }
-                  return null;
-                },
+                validator:
+                    (
+                      value,
+                    ) {
+                      if (value ==
+                              null ||
+                          value.isEmpty) {
+                        return 'Please enter a message';
+                      }
+                      if (value.length <
+                          5) {
+                        return 'Message must be at least 5 characters';
+                      }
+                      return null;
+                    },
               ),
-              const SizedBox(height: 30),
+              const SizedBox(
+                height: 30,
+              ),
 
               // Send Button
               ElevatedButton(
-                onPressed: _isLoading ? null : _sendNotification,
+                onPressed: _isLoading
+                    ? null
+                    : _sendNotification,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue.shade700,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                  ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(
+                      12,
+                    ),
                   ),
                 ),
                 child: _isLoading
                     ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation(Colors.white),
-                  ),
-                )
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation(
+                            Colors.white,
+                          ),
+                        ),
+                      )
                     : const Text(
-                  'Send Notification to All Users',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                        'Send Notification to All Users',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(
+                height: 20,
+              ),
 
               // Information Card
               Card(
                 color: Colors.blue.shade50,
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(
+                    16.0,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.info, color: Colors.blue.shade700),
-                          const SizedBox(width: 10),
+                          Icon(
+                            Icons.info,
+                            color: Colors.blue.shade700,
+                          ),
+                          const SizedBox(
+                            width: 10,
+                          ),
                           Text(
                             'About This Feature',
                             style: TextStyle(
@@ -251,10 +377,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(
+                        height: 10,
+                      ),
                       Text(
                         'This notification will be sent to all users who have enabled push notifications in your app. '
-                            'The message will appear on their devices even if the app is closed.',
+                        'The message will appear on their devices even if the app is closed.',
                         style: TextStyle(
                           color: Colors.blue.shade700,
                         ),

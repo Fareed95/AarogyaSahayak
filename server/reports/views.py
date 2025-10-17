@@ -15,8 +15,8 @@ from .models import Report, ReportInstance
 from .agents.extracting_basic_details import extract_report_from_pdf, generate_report_summary as generate_basic_summary
 from .agents.extracting_json_details import extract_medical_from_pdf, generate_report_summary as generate_json_summary
 from .agents.overal_summary import generate_final_summary
-
-
+from .agents.yoga_prompt import get_youtube_query
+from .agents.youtube_scrapping import youtube_search
 class UploadReportView(APIView):
     """
     Upload PDF, extract report details, save to Report & ReportInstance.
@@ -61,7 +61,8 @@ class UploadReportView(APIView):
                 basic_details=structured_json[0].get("details") if structured_json else {},
                 summary=f"{basic_summary}\n\n{test_summary}"
             )
-
+            youtube_query = get_youtube_query(final_summary_text)
+            youtube_results_json = youtube_search(youtube_query, max_results=5)
             # -------------------------------
             # Save ReportInstance (without instance_name)
             # -------------------------------
@@ -73,6 +74,7 @@ class UploadReportView(APIView):
                     "test_details": test_json
                 },
                 instance_summary=final_summary_text,
+                youtube_videos=json.loads(youtube_results_json),
                 name_of_the_doctor=page_reports[0].details.doctor_name if page_reports else "",
                 address_of_the_doctor=page_reports[0].details.hospital_address if page_reports else ""
             )
@@ -85,7 +87,8 @@ class UploadReportView(APIView):
                 "report_id": report.id,
                 "instance_id": instance.id,
                 "message": "Report uploaded and processed successfully.",
-                "final_summary": final_summary_text
+                "final_summary": final_summary_text,
+                "structured_json": structured_json,
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
@@ -167,6 +170,7 @@ class UserChatBotAPIView(APIView):
 
 class UserReportInstancesView(APIView):
 
+
     def post(self, request):
         """
         POST: user ka email bhejo aur uske report instances return honge
@@ -190,12 +194,28 @@ class UserReportInstancesView(APIView):
 
     def get(self, request):
         """
-        GET: email ke bina, sirf authenticated user ke reports aayenge
+        GET: 
+        - Agar pk diya hai: sirf us report instance ka data return hoga
+        - Agar pk nahi diya: sabhi authenticated user ke report instances return honge
         """
         user = authenticate_request(request, need_user=True)
         if not user:
             return Response({"error": "Authentication failed"}, status=status.HTTP_401_UNAUTHORIZED)
 
+        pk = request.query_params.get("pk")  # GET query parameter
+        if pk:
+            try:
+                instance = ReportInstance.objects.get(pk=pk, report__user=user)
+            except ReportInstance.DoesNotExist:
+                return Response({"error": "Report instance not found"}, status=status.HTTP_404_NOT_FOUND)
+            
+            serializer = ReportInstanceSerializer(instance)
+            return Response({
+                "email": user.email,
+                "report_instance": serializer.data
+            }, status=status.HTTP_200_OK)
+        
+        # Agar pk nahi diya, sabhi instances return karo
         instances = ReportInstance.objects.filter(report__user=user)
         serializer = ReportInstanceSerializer(instances, many=True)
 

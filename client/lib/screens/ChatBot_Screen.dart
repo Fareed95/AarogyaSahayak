@@ -71,7 +71,7 @@ class _ChatBotScreenState
 
       final response = await http.post(
         Uri.parse(
-          "https://codenebula-internal-round-25.onrender.com/api/reports/chatbot/",
+          "http://192.168.0.107:8000/api/reports/chatbot/",
         ),
         headers: {
           "Content-Type": "application/json",
